@@ -2,7 +2,7 @@
 <html lang="tr" data-bs-theme="dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <title>Never Hacked – Admin Kontrol Merkezi</title>
   <meta name="description" content="Never Hacked Yönetim Konsolu. Token üretimi, lisans yönetimi ve sorgu istatistikleri.">
 
@@ -99,168 +99,218 @@
 
 <div class="container-fluid position-relative py-4 px-md-5" style="z-index:1; max-width:1200px;">
 
-  <!-- ══ Üst Bar ═══════════════════════════════════════════════════════════ -->
-  <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom" style="border-color: var(--clr-border)!important;">
-    <div>
-      <h1 class="nh-title glow mb-0" style="font-size: clamp(1.5rem, 4vw, 2.5rem);">
-        <i class="bi bi-shield-shaded me-2"></i>ADMIN MERKEZİ
-      </h1>
-      <p class="nh-subtitle mb-0">Erişim Tokenı Üretimi & Sistem Yönetimi</p>
-    </div>
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- 1. ADMİN ŞİFRE GİRİŞ EKRANI (Oturum Yokken Sadece Bu Görünür)          -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="adminLoginSection" class="d-none" style="max-width: 440px; margin: 4rem auto 0;">
+    <div class="nh-card p-4 text-center">
+      <h2 class="nh-title glow mb-2" style="font-size: 1.7rem;">ADMIN GİRİŞİ</h2>
+      <p class="nh-subtitle mb-4">Yetkili Yönetici Doğrulaması</p>
 
-    <div class="d-flex gap-2">
-      <button id="refreshBtn" class="nh-btn py-1 px-3" style="font-size:0.8rem!important">
-        <i class="bi bi-arrow-clockwise me-1"></i>Yenile
-      </button>
-      <a href="/" class="nh-btn py-1 px-3" style="font-size:0.8rem!important; text-decoration:none;">
-        <i class="bi bi-arrow-left-circle me-1"></i>Sorgu Ekranına Dön
-      </a>
-    </div>
-  </header>
-
-  <!-- ══ İstatistik Kartları ═══════════════════════════════════════════════ -->
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-value" id="statActiveTokens">0</div>
-        <div class="stat-label"><i class="bi bi-key me-1"></i>Aktif Token</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-value" style="color:var(--clr-danger)" id="statRevokedTokens">0</div>
-        <div class="stat-label"><i class="bi bi-x-circle me-1"></i>İptal Edilen</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-value" id="statSearches">0</div>
-        <div class="stat-label"><i class="bi bi-search me-1"></i>Toplam Sorgu</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stat-card">
-        <div class="stat-value" id="statUsers">0</div>
-        <div class="stat-label"><i class="bi bi-people me-1"></i>Kayıtlı Hedef</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ Yeni Token Üretme Paneli ══════════════════════════════════════════ -->
-  <div class="nh-card p-4 mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
-        <i class="bi bi-plus-circle me-2"></i>YENİ ERİŞİM TOKENI OLUŞTUR
-      </h5>
-    </div>
-
-    <div class="row g-2 align-items-center">
-      <div class="col-md-6">
-        <input
-          type="text"
-          id="newTokenNote"
-          class="form-control nh-input"
-          placeholder="Açıklama / Kime Ait (Örn: VIP Müşteri, Test Anahtarı)"
-          autocomplete="off"
-        >
-      </div>
-      <div class="col-md-3">
-        <input
-          type="text"
-          id="newCustomKey"
-          class="form-control nh-input"
-          placeholder="Özel Anahtar (Boş bırakılırsa otomatik üretilir)"
-          autocomplete="off"
-        >
-      </div>
-      <div class="col-md-3">
-        <button id="generateBtn" class="nh-btn w-100 py-2">
-          <i class="bi bi-lightning-charge-fill me-1"></i>Token Üret
-        </button>
-      </div>
-    </div>
-
-    <!-- Son Üretilen Token Bildirimi -->
-    <div id="newlyCreatedBox" class="d-none mt-3 p-3" style="background:rgba(0,255,65,0.05); border:1px dashed var(--clr-green); border-radius:var(--radius);">
-      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <div>
-          <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--clr-green);">
-            <i class="bi bi-check2-circle me-1"></i>Yeni Token Hazır:
+      <div class="mb-3 text-start">
+        <label for="adminPassInput" class="form-label" style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-text-muted); text-transform:uppercase;">
+          Yönetici Şifresi / Master Key
+        </label>
+        <div class="input-group">
+          <span class="input-group-text nh-input" style="border-right:none; background:transparent!important; color:var(--clr-green)!important;">
+            <i class="bi bi-key-fill"></i>
           </span>
-          <span id="createdKeyDisplay" style="font-family:var(--font-mono); font-size:1rem; font-weight:bold; color:#fff; margin-left:8px;"></span>
+          <input
+            type="password"
+            id="adminPassInput"
+            class="form-control nh-input"
+            placeholder="Şifrenizi giriniz..."
+            autocomplete="current-password"
+          >
         </div>
-        <button id="copyCreatedBtn" class="nh-btn py-1 px-3" style="font-size:0.75rem!important">
-          <i class="bi bi-clipboard me-1"></i>Kopyala
-        </button>
+      </div>
+
+      <button id="adminLoginBtn" class="nh-btn w-100 py-2">
+        <i class="bi bi-shield-lock-fill me-2"></i>Panele Giriş Yap
+      </button>
+
+      <div id="adminLoginError" class="nh-error mt-3 d-none"></div>
+
+      <div class="mt-4 pt-2 border-top" style="border-color: rgba(0,255,65,0.1)!important;">
+        <a href="/" style="font-family:var(--font-mono); font-size:0.78rem; color:var(--clr-text-muted); text-decoration:none;">
+          <i class="bi bi-arrow-left me-1"></i>Kullanıcı Arama Sayfasına Dön
+        </a>
       </div>
     </div>
   </div>
 
-  <!-- ══ Token Yönetim Tablosu ═════════════════════════════════════════════ -->
-  <div class="nh-card p-4 mb-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
-        <i class="bi bi-key-fill me-2"></i>ERİŞİM TOKENLARI LİSTESİ
-      </h5>
-      <span id="tokenCountLabel" class="status-badge online">0 Token</span>
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- 2. ADMİN ANA DASHBOARD (Sadece Şifre Doğruysa Açılır)                   -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="adminDashboardSection" class="d-none">
+    
+    <!-- ══ Üst Bar ═══════════════════════════════════════════════════════════ -->
+    <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom" style="border-color: var(--clr-border)!important;">
+      <div>
+        <h1 class="nh-title glow mb-0" style="font-size: clamp(1.4rem, 4vw, 2.2rem);">
+          <i class="bi bi-shield-shaded me-2"></i>ADMIN MERKEZİ
+        </h1>
+        <p class="nh-subtitle mb-0">Erişim Tokenı Üretimi & Sistem Yönetimi</p>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button id="refreshBtn" class="nh-btn py-1 px-3" style="font-size:0.8rem!important">
+          <i class="bi bi-arrow-clockwise me-1"></i>Yenile
+        </button>
+        <a href="/" class="nh-btn py-1 px-3" style="font-size:0.8rem!important; text-decoration:none;">
+          <i class="bi bi-arrow-left-circle me-1"></i>Arama Ekranı
+        </a>
+        <button id="adminLogoutBtn" class="nh-btn nh-btn-danger py-1 px-3" style="font-size:0.8rem!important">
+          <i class="bi bi-box-arrow-right me-1"></i>Çıkış
+        </button>
+      </div>
+    </header>
+
+    <!-- ══ İstatistik Kartları ═══════════════════════════════════════════════ -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" id="statActiveTokens">0</div>
+          <div class="stat-label"><i class="bi bi-key me-1"></i>Aktif Token</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--clr-danger)" id="statRevokedTokens">0</div>
+          <div class="stat-label"><i class="bi bi-x-circle me-1"></i>İptal Edilen</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" id="statSearches">0</div>
+          <div class="stat-label"><i class="bi bi-search me-1"></i>Toplam Sorgu</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="stat-card">
+          <div class="stat-value" id="statUsers">0</div>
+          <div class="stat-label"><i class="bi bi-people me-1"></i>Kayıtlı Hedef</div>
+        </div>
+      </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-hacker">
-        <thead>
-          <tr>
-            <th>Token Anahtarı</th>
-            <th>Açıklama / Not</th>
-            <th>Durum</th>
-            <th>Sorgu Sayısı</th>
-            <th>Oluşturulma</th>
-            <th>Son Kullanım</th>
-            <th class="text-end">İşlemler</th>
-          </tr>
-        </thead>
-        <tbody id="tokensTableBody">
-          <tr>
-            <td colspan="7" class="text-center py-4 text-muted">
-              <span class="nh-spinner"></span>Yükleniyor...
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+    <!-- ══ Yeni Token Üretme Paneli ══════════════════════════════════════════ -->
+    <div class="nh-card p-4 mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+          <i class="bi bi-plus-circle me-2"></i>YENİ ERİŞİM TOKENI OLUŞTUR
+        </h5>
+      </div>
 
-  <!-- ══ Sorgulanan Hedef Kullanıcılar ═════════════════════════════════════ -->
-  <div class="nh-card p-4">
-    <div class="d-flex align-items-center justify-content-between mb-3">
-      <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
-        <i class="bi bi-database-check me-2"></i>SORGULANAN HEDEF KULLANICILAR
-      </h5>
-      <span id="userCountLabel" class="status-badge online">0 Kayıt</span>
+      <div class="row g-2 align-items-center">
+        <div class="col-md-6">
+          <input
+            type="text"
+            id="newTokenNote"
+            class="form-control nh-input"
+            placeholder="Açıklama / Kime Ait (Örn: VIP Müşteri, Test Anahtarı)"
+            autocomplete="off"
+          >
+        </div>
+        <div class="col-md-3">
+          <input
+            type="text"
+            id="newCustomKey"
+            class="form-control nh-input"
+            placeholder="Özel Anahtar (Boş bırakılırsa otomatik üretilir)"
+            autocomplete="off"
+          >
+        </div>
+        <div class="col-md-3">
+          <button id="generateBtn" class="nh-btn w-100 py-2">
+            <i class="bi bi-lightning-charge-fill me-1"></i>Token Üret
+          </button>
+        </div>
+      </div>
+
+      <!-- Son Üretilen Token Bildirimi -->
+      <div id="newlyCreatedBox" class="d-none mt-3 p-3" style="background:rgba(0,255,65,0.05); border:1px dashed var(--clr-green); border-radius:var(--radius);">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <div>
+            <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--clr-green);">
+              <i class="bi bi-check2-circle me-1"></i>Yeni Token Hazır:
+            </span>
+            <span id="createdKeyDisplay" style="font-family:var(--font-mono); font-size:1rem; font-weight:bold; color:#fff; margin-left:8px;"></span>
+          </div>
+          <button id="copyCreatedBtn" class="nh-btn py-1 px-3" style="font-size:0.75rem!important">
+            <i class="bi bi-clipboard me-1"></i>Kopyala
+          </button>
+        </div>
+      </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-hacker">
-        <thead>
-          <tr>
-            <th>Avatar</th>
-            <th>MID</th>
-            <th>Kullanıcı Adı (Nick)</th>
-            <th>IP Adresi</th>
-            <th>Cihaz</th>
-            <th>Kayıt Tarihi</th>
-            <th class="text-end">Sil</th>
-          </tr>
-        </thead>
-        <tbody id="usersTableBody">
-          <tr>
-            <td colspan="7" class="text-center py-4 text-muted">
-              <span class="nh-spinner"></span>Yükleniyor...
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- ══ Token Yönetim Tablosu ═════════════════════════════════════════════ -->
+    <div class="nh-card p-4 mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+          <i class="bi bi-key-fill me-2"></i>ERİŞİM TOKENLARI LİSTESİ
+        </h5>
+        <span id="tokenCountLabel" class="status-badge online">0 Token</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hacker">
+          <thead>
+            <tr>
+              <th>Token Anahtarı</th>
+              <th>Açıklama / Not</th>
+              <th>Durum</th>
+              <th>Sorgu Sayısı</th>
+              <th>Oluşturulma</th>
+              <th>Son Kullanım</th>
+              <th class="text-end">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody id="tokensTableBody">
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">
+                <span class="nh-spinner"></span>Yükleniyor...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
-  </div>
+
+    <!-- ══ Sorgulanan Hedef Kullanıcılar ═════════════════════════════════════ -->
+    <div class="nh-card p-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+          <i class="bi bi-database-check me-2"></i>SORGULANAN HEDEF KULLANICILAR
+        </h5>
+        <span id="userCountLabel" class="status-badge online">0 Kayıt</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hacker">
+          <thead>
+            <tr>
+              <th>Avatar</th>
+              <th>ID</th>
+              <th>Kullanıcı Adı (Nick)</th>
+              <th>IP Adresi</th>
+              <th>Cihaz</th>
+              <th>Kayıt Tarihi</th>
+              <th class="text-end">Sil</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">
+                <span class="nh-spinner"></span>Yükleniyor...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /adminDashboardSection -->
 
 </div><!-- /container -->
 
@@ -269,20 +319,106 @@
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
-   Never Hacked – Admin Paneli Scripti
+   Never Hacked – Şifre Korumalı Admin Paneli Scripti
    ═══════════════════════════════════════════════════════════════════════════ */
 
+let adminToken = localStorage.getItem('nh_admin_token') || null;
+
 const $ = (id) => document.getElementById(id);
+const show = (el) => el.classList.remove('d-none');
+const hide = (el) => el.classList.add('d-none');
+
+// ─── Oturum Durumuna Göre Arayüzü Yönet ──────────────────────────────────────
+function renderAdminState() {
+  if (adminToken) {
+    hide($('adminLoginSection'));
+    show($('adminDashboardSection'));
+    loadAll();
+  } else {
+    show($('adminLoginSection'));
+    hide($('adminDashboardSection'));
+    $('adminPassInput').focus();
+  }
+}
+
+// ─── Admin Giriş Yap ────────────────────────────────────────────────────────
+$('adminLoginBtn').addEventListener('click', doAdminLogin);
+$('adminPassInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doAdminLogin();
+});
+
+async function doAdminLogin() {
+  const password = $('adminPassInput').value.trim();
+  const btn = $('adminLoginBtn');
+
+  if (!password) {
+    show($('adminLoginError'));
+    $('adminLoginError').textContent = 'Lütfen yönetici şifresini giriniz.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="nh-spinner"></span>Doğrulanıyor...';
+  hide($('adminLoginError'));
+
+  try {
+    const res = await fetch('/api/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.msg || "Giriş başarısız");
+
+    adminToken = data.admin_token;
+    localStorage.setItem('nh_admin_token', adminToken);
+    $('adminPassInput').value = '';
+
+    renderAdminState();
+  } catch (err) {
+    show($('adminLoginError'));
+    $('adminLoginError').textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-shield-lock-fill me-2"></i>Panele Giriş Yap';
+  }
+}
+
+// ─── Admin Çıkış Yap ────────────────────────────────────────────────────────
+$('adminLogoutBtn').addEventListener('click', () => {
+  adminToken = null;
+  localStorage.removeItem('nh_admin_token');
+  renderAdminState();
+});
+
+// ─── Korumalı Admin API İsteği ──────────────────────────────────────────────
+async function adminFetch(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (adminToken) {
+    headers['Authorization'] = `Bearer ${adminToken}`;
+  }
+
+  const res = await fetch(path, { ...options, headers });
+  if (res.status === 401 || res.status === 403) {
+    adminToken = null;
+    localStorage.removeItem('nh_admin_token');
+    renderAdminState();
+    throw new Error("Oturum süreniz doldu, lütfen tekrar şifre giriniz.");
+  }
+  return res;
+}
 
 // ─── Verileri Yükle ─────────────────────────────────────────────────────────
 async function loadAll() {
+  if (!adminToken) return;
   await Promise.all([loadStats(), loadTokens(), loadUsers()]);
 }
 
 // ─── 1. İstatistikler ────────────────────────────────────────────────────────
 async function loadStats() {
   try {
-    const res = await fetch('/api/admin/stats');
+    const res = await adminFetch('/api/admin/stats');
     if (!res.ok) return;
     const d = await res.json();
     $('statActiveTokens').textContent  = d.active_tokens;
@@ -298,7 +434,7 @@ async function loadStats() {
 async function loadTokens() {
   const tbody = $('tokensTableBody');
   try {
-    const res = await fetch('/api/admin/tokens');
+    const res = await adminFetch('/api/admin/tokens');
     if (!res.ok) throw new Error("Tokenlar getirilemedi");
     const tokens = await res.json();
 
@@ -349,7 +485,7 @@ async function loadTokens() {
 async function loadUsers() {
   const tbody = $('usersTableBody');
   try {
-    const res = await fetch('/api/admin/users');
+    const res = await adminFetch('/api/admin/users');
     if (!res.ok) throw new Error("Kullanıcılar getirilemedi");
     const users = await res.json();
 
@@ -394,23 +530,19 @@ $('generateBtn').addEventListener('click', async () => {
   btn.innerHTML = '<span class="nh-spinner"></span>Üretiliyor...';
 
   try {
-    const res = await fetch('/api/admin/tokens/generate', {
+    const res = await adminFetch('/api/admin/tokens/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ note, custom_key: customKey }),
     });
     const d = await res.json();
     if (!res.ok) throw new Error(d.msg || "Token üretilemedi");
 
-    // Bildirim kutusunu göster
     $('createdKeyDisplay').textContent = d.token.key;
     $('newlyCreatedBox').classList.remove('d-none');
     $('newTokenNote').value = '';
     $('newCustomKey').value = '';
 
-    // Otomatik panoya kopyala
     copyToClipboard(d.token.key);
-
     await loadAll();
   } catch (e) {
     alert(e.message);
@@ -420,7 +552,6 @@ $('generateBtn').addEventListener('click', async () => {
   }
 });
 
-// Kopyalama butonu
 $('copyCreatedBtn').addEventListener('click', () => {
   const k = $('createdKeyDisplay').textContent;
   if (k) copyToClipboard(k);
@@ -429,7 +560,7 @@ $('copyCreatedBtn').addEventListener('click', () => {
 // ─── 5. Token Durumunu Değiştir (Revoke/Aktif) ──────────────────────────────
 async function toggleToken(id) {
   try {
-    const res = await fetch(`/api/admin/tokens/${id}/toggle`, { method: 'POST' });
+    const res = await adminFetch(`/api/admin/tokens/${id}/toggle`, { method: 'POST' });
     if (!res.ok) throw new Error("Durum değiştirilemedi");
     await loadAll();
   } catch (e) {
@@ -441,7 +572,7 @@ async function toggleToken(id) {
 async function deleteToken(id) {
   if (!confirm("Bu tokenı kalıcı olarak silmek istediğinize emin misiniz?")) return;
   try {
-    const res = await fetch(`/api/admin/tokens/${id}`, { method: 'DELETE' });
+    const res = await adminFetch(`/api/admin/tokens/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error("Token silinemedi");
     await loadAll();
   } catch (e) {
@@ -453,7 +584,7 @@ async function deleteToken(id) {
 async function deleteUser(id) {
   if (!confirm("Bu kullanıcı kaydını silmek istediğinize emin misiniz?")) return;
   try {
-    const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+    const res = await adminFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error("Kullanıcı silinemedi");
     await loadAll();
   } catch (e) {
@@ -461,10 +592,9 @@ async function deleteUser(id) {
   }
 }
 
-// ─── Yardımcılar ────────────────────────────────────────────────────────────
+// ─── Kopyalama Yardımcısı ───────────────────────────────────────────────────
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
-    // Geçici toast/bildirim
     const el = document.createElement('div');
     el.textContent = `Kopyalandı: ${text}`;
     el.style.position = 'fixed';
@@ -497,8 +627,8 @@ function escapeHtml(str) {
 
 $('refreshBtn').addEventListener('click', loadAll);
 
-// Başlangıçta yükle
-loadAll();
+// Başlangıç durumu
+renderAdminState();
 </script>
 </body>
 </html>

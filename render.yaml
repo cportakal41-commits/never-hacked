@@ -21,6 +21,8 @@ services:
         fromDatabase:
           name: never-hacked-db
           property: connectionString
+      - key: ADMIN_PASSWORD
+        value: NeverHacked2026!
       - key: LOG_LEVEL
         value: INFO
 

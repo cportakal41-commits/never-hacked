@@ -1,5 +1,6 @@
 import logging
-from flask import Blueprint, request, jsonify
+from functools import wraps
+from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
 from .. import db
 from ..models import Token, User
@@ -8,8 +9,60 @@ logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin_api", __name__)
 
 
+# ─── Admin Kimlik Doğrulama Dekoratörü ─────────────────────────────────────────
+def admin_required(f):
+    """Admin paneli endpoint'lerini korur. Şifre veya admin token zorunludur."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        admin_pass = current_app.config.get("ADMIN_PASSWORD", "NeverHacked2026!")
+
+        # 1. Header kontrolü (X-Admin-Key)
+        header_key = request.headers.get("X-Admin-Key") or request.headers.get("X-Admin-Password")
+        if header_key and header_key == admin_pass:
+            return f(*args, **kwargs)
+
+        # 2. Bearer token kontrolü
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            if token == admin_pass:
+                return f(*args, **kwargs)
+            try:
+                from flask_jwt_extended import decode_token
+                decoded = decode_token(token)
+                if decoded.get("sub") == "admin" or decoded.get("is_admin"):
+                    return f(*args, **kwargs)
+            except Exception:
+                pass
+
+        return jsonify({"msg": "Yetkisiz erişim! Lütfen admin şifresi ile giriş yapınız."}), 401
+    return decorated
+
+
+# ─── Admin Giriş Endpoint'i ───────────────────────────────────────────────────
+@admin_bp.route("/login", methods=["POST"])
+def admin_login():
+    """Admin şifresi doğrulaması yapar ve admin oturum token'ı döner."""
+    data = request.get_json(silent=True) or {}
+    password = data.get("password", "").strip()
+    admin_pass = current_app.config.get("ADMIN_PASSWORD", "NeverHacked2026!")
+
+    if not password or password != admin_pass:
+        return jsonify({"msg": "Hatalı yönetici şifresi!"}), 401
+
+    from flask_jwt_extended import create_access_token
+    token = create_access_token(identity="admin", additional_claims={"is_admin": True})
+
+    logger.info("Admin paneline başarılı giriş yapıldı.")
+    return jsonify({
+        "msg": "Giriş başarılı",
+        "admin_token": token,
+    }), 200
+
+
 # ─── İstatistikler ─────────────────────────────────────────────────────────────
 @admin_bp.route("/stats", methods=["GET"])
+@admin_required
 def get_stats():
     """Admin paneli için genel istatistikleri döndürür."""
     total_tokens = Token.query.count()
@@ -17,7 +70,6 @@ def get_stats():
     revoked_tokens = Token.query.filter_by(revoked=True).count()
     total_users = User.query.count()
 
-    # Toplam yapılan arama sayısı (tüm token'ların usage_count toplamı)
     total_searches = db.session.query(db.func.sum(Token.usage_count)).scalar() or 0
 
     return jsonify({
@@ -31,6 +83,7 @@ def get_stats():
 
 # ─── Token Listeleme ──────────────────────────────────────────────────────────
 @admin_bp.route("/tokens", methods=["GET"])
+@admin_required
 def list_tokens():
     """Tüm erişim token'larını listeler."""
     tokens = Token.query.order_by(Token.created_at.desc()).all()
@@ -47,13 +100,13 @@ def list_tokens():
 
 # ─── Yeni Token Üret ──────────────────────────────────────────────────────────
 @admin_bp.route("/tokens/generate", methods=["POST"])
+@admin_required
 def generate_token():
     """Yeni bir erişim token'ı üretir."""
     data = request.get_json(silent=True) or {}
     note = data.get("note", "").strip() or "Genel Kullanıcı"
     custom_key = data.get("custom_key", "").strip()
 
-    # Özel anahtar belirtilmişse kontrol et
     if custom_key:
         exists = Token.query.filter_by(key=custom_key).first()
         if exists:
@@ -85,6 +138,7 @@ def generate_token():
 
 # ─── Token Durumunu Değiştir (İptal Et / Aktif Et) ────────────────────────────
 @admin_bp.route("/tokens/<int:token_id>/toggle", methods=["POST"])
+@admin_required
 def toggle_token(token_id: int):
     """Token'ı iptal eder veya tekrar aktif hale getirir."""
     token = Token.query.get(token_id)
@@ -104,6 +158,7 @@ def toggle_token(token_id: int):
 
 # ─── Token Sil ────────────────────────────────────────────────────────────────
 @admin_bp.route("/tokens/<int:token_id>", methods=["DELETE"])
+@admin_required
 def delete_token(token_id: int):
     """Belirli bir token'ı veritabanından tamamen siler."""
     token = Token.query.get(token_id)
@@ -118,6 +173,7 @@ def delete_token(token_id: int):
 
 # ─── Sorgulanan Kullanıcılar ──────────────────────────────────────────────────
 @admin_bp.route("/users", methods=["GET"])
+@admin_required
 def list_users():
     """Sorgulanıp kaydedilen tüm Hazaclub kullanıcılarını listeler."""
     users = User.query.order_by(User.id.desc()).all()
@@ -134,6 +190,7 @@ def list_users():
 
 # ─── Kullanıcı Sil ────────────────────────────────────────────────────────────
 @admin_bp.route("/users/<int:user_id>", methods=["DELETE"])
+@admin_required
 def delete_user(user_id: int):
     """Sorgu geçmişinden bir kullanıcıyı siler."""
     user = User.query.get(user_id)
