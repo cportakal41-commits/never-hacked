@@ -297,7 +297,7 @@ async function api(path, options = {}) {
   const json = await resp.json().catch(() => ({}));
 
   if (!resp.ok) {
-    if (resp.status === 401 || resp.status === 403 || resp.status === 422) {
+    if (resp.status === 401 || resp.status === 422) {
       if (accessToken) {
         accessToken = null;
         localStorage.removeItem('nh_access_token');

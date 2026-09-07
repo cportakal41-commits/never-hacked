@@ -176,28 +176,34 @@
 
     <!-- ══ İstatistik Kartları ═══════════════════════════════════════════════ -->
     <div class="row g-3 mb-4">
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md">
         <div class="stat-card">
           <div class="stat-value" id="statActiveTokens">0</div>
           <div class="stat-label"><i class="bi bi-key me-1"></i>Aktif Token</div>
         </div>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md">
         <div class="stat-card">
           <div class="stat-value" style="color:var(--clr-danger)" id="statRevokedTokens">0</div>
           <div class="stat-label"><i class="bi bi-x-circle me-1"></i>İptal Edilen</div>
         </div>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md">
         <div class="stat-card">
           <div class="stat-value" id="statSearches">0</div>
           <div class="stat-label"><i class="bi bi-search me-1"></i>Toplam Sorgu</div>
         </div>
       </div>
-      <div class="col-6 col-md-3">
+      <div class="col-6 col-md">
         <div class="stat-card">
           <div class="stat-value" id="statUsers">0</div>
           <div class="stat-label"><i class="bi bi-people me-1"></i>Kayıtlı Hedef</div>
+        </div>
+      </div>
+      <div class="col-6 col-md">
+        <div class="stat-card">
+          <div class="stat-value" style="color:var(--clr-danger)" id="statBlockedIds">0</div>
+          <div class="stat-label"><i class="bi bi-shield-slash-fill me-1"></i>Kısıtlı ID</div>
         </div>
       </div>
     </div>
@@ -277,6 +283,71 @@
           <tbody id="tokensTableBody">
             <tr>
               <td colspan="7" class="text-center py-4 text-muted">
+                <span class="nh-spinner"></span>Yükleniyor...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ══ Kısıtlı / Yasaklı ID Yönetim Paneli (Kara Liste) ═════════════════ -->
+    <div class="nh-card p-4 mb-4" style="border-color: rgba(255, 65, 65, 0.4)!important;">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div>
+          <h5 class="mb-1" style="font-family:var(--font-title); color:var(--clr-danger); font-size:1.1rem;">
+            <i class="bi bi-shield-slash-fill me-2"></i>KISITLI HEDEF ID'LER (SORGULAMA ENGELİ)
+          </h5>
+          <p class="text-muted mb-0" style="font-size:0.8rem;">
+            Buraya eklenen ID'ler sorgulandığında kullanıcıya <strong style="color:var(--clr-danger);">"Admin tarafından kısıtlı erişim"</strong> hatası verilir ve bilgileri gösterilmez.
+          </p>
+        </div>
+        <span id="blockedCountLabel" class="status-badge" style="background:rgba(255,65,65,0.15); color:var(--clr-danger); border:1px solid rgba(255,65,65,0.4);">0 Kısıtlı ID</span>
+      </div>
+
+      <!-- Yeni ID Engelleme Formu -->
+      <div class="row g-2 align-items-center mb-4 pb-3 border-bottom" style="border-color: var(--clr-border)!important;">
+        <div class="col-md-4">
+          <input
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            id="newBlockedMid"
+            class="form-control nh-input"
+            placeholder="Engellenecek Kullanıcı ID (Örn: 102379520)"
+            autocomplete="off"
+          >
+        </div>
+        <div class="col-md-5">
+          <input
+            type="text"
+            id="newBlockedNote"
+            class="form-control nh-input"
+            placeholder="Engel Sebebi (Varsayılan: Admin tarafından kısıtlı erişim)"
+            autocomplete="off"
+          >
+        </div>
+        <div class="col-md-3">
+          <button id="addBlockedBtn" class="nh-btn nh-btn-danger w-100 py-2">
+            <i class="bi bi-slash-circle me-1"></i>ID'yi Kısıtla
+          </button>
+        </div>
+      </div>
+
+      <!-- Engellenen ID'ler Tablosu -->
+      <div class="table-responsive">
+        <table class="table table-hacker">
+          <thead>
+            <tr>
+              <th>Engelli ID</th>
+              <th>Engel Sebebi / Not</th>
+              <th>Engellenme Tarihi</th>
+              <th class="text-end">Engeli Kaldır</th>
+            </tr>
+          </thead>
+          <tbody id="blockedTableBody">
+            <tr>
+              <td colspan="4" class="text-center py-4 text-muted">
                 <span class="nh-spinner"></span>Yükleniyor...
               </td>
             </tr>
@@ -445,7 +516,7 @@ async function adminFetch(path, options = {}) {
 async function loadAll() {
   if (!adminToken) return;
   try {
-    await Promise.all([loadStats(), loadTokens(), loadUsers()]);
+    await Promise.all([loadStats(), loadTokens(), loadBlockedIds(), loadUsers()]);
   } catch (_) { }
 }
 
@@ -459,6 +530,7 @@ async function loadStats() {
     $('statRevokedTokens').textContent = d.revoked_tokens;
     $('statSearches').textContent      = d.total_searches;
     $('statUsers').textContent         = d.total_users;
+    $('statBlockedIds').textContent    = d.total_blocked ?? 0;
   } catch (e) {
     console.error("Stats hatası:", e);
   }
@@ -554,7 +626,95 @@ async function loadUsers() {
   }
 }
 
-// ─── 4. Yeni Token Üret ─────────────────────────────────────────────────────
+// ─── 4. Kısıtlı / Yasaklı ID'ler (Kara Liste) ───────────────────────────────
+async function loadBlockedIds() {
+  const tbody = $('blockedTableBody');
+  try {
+    const res = await adminFetch('/api/admin/blocked-ids');
+    if (!res.ok) throw new Error("Kısıtlı ID listesi getirilemedi");
+    const items = await res.json();
+
+    $('blockedCountLabel').textContent = `${items.length} Kısıtlı ID`;
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center py-3 text-muted">Henüz kısıtlanan ID yok.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items.map(b => `
+      <tr>
+        <td style="color:var(--clr-danger); font-weight:bold; font-family:var(--font-mono); font-size:1.05rem;">
+          <i class="bi bi-shield-x me-2"></i>${b.mid}
+        </td>
+        <td style="color:#fff;">${escapeHtml(b.note)}</td>
+        <td style="color:var(--clr-text-muted); font-size:0.85rem;">${b.created_at}</td>
+        <td class="text-end">
+          <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.75rem!important" onclick="deleteBlockedId(${b.id}, ${b.mid})" title="Engeli Kaldır">
+            <i class="bi bi-unlock me-1"></i>Engeli Kaldır
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="4" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+// Yeni Kısıtlı ID Ekle
+$('addBlockedBtn').addEventListener('click', async () => {
+  const mid = $('newBlockedMid').value.trim();
+  const note = $('newBlockedNote').value.trim();
+  const btn = $('addBlockedBtn');
+
+  if (!mid || !/^\d+$/.test(mid)) {
+    alert("Lütfen geçerli bir sayısal ID (MID) giriniz.");
+    $('newBlockedMid').focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="nh-spinner"></span>Kısıtlanıyor...';
+
+  try {
+    const res = await adminFetch('/api/admin/blocked-ids', {
+      method: 'POST',
+      body: JSON.stringify({ mid, note }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.msg || "ID engellenemedi");
+
+    $('newBlockedMid').value = '';
+    $('newBlockedNote').value = '';
+    await loadAll();
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i>ID\'yi Kısıtla';
+  }
+});
+
+$('newBlockedMid').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') $('addBlockedBtn').click();
+});
+$('newBlockedNote').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') $('addBlockedBtn').click();
+});
+
+// Kısıtlı ID Sil / Engeli Kaldır
+async function deleteBlockedId(id, mid) {
+  if (!confirm(`${mid} ID'sinin kısıtlamasını kaldırmak istediğinize emin misiniz?`)) return;
+  try {
+    const res = await adminFetch(`/api/admin/blocked-ids/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("Engel kaldırılamadı");
+    await loadAll();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// ─── 5. Yeni Token Üret ─────────────────────────────────────────────────────
 $('generateBtn').addEventListener('click', async () => {
   const note = $('newTokenNote').value.trim();
   const customKey = $('newCustomKey').value.trim();

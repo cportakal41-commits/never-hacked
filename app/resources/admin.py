@@ -3,7 +3,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
 from .. import db
-from ..models import Token, User
+from ..models import Token, User, BlockedId
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin_api", __name__)
@@ -90,6 +90,7 @@ def get_stats():
     active_tokens = Token.query.filter_by(revoked=False).count()
     revoked_tokens = Token.query.filter_by(revoked=True).count()
     total_users = User.query.count()
+    total_blocked = BlockedId.query.count()
 
     total_searches = db.session.query(db.func.sum(Token.usage_count)).scalar() or 0
 
@@ -98,6 +99,7 @@ def get_stats():
         "active_tokens": active_tokens,
         "revoked_tokens": revoked_tokens,
         "total_users": total_users,
+        "total_blocked": total_blocked,
         "total_searches": int(total_searches),
     })
 
@@ -221,3 +223,66 @@ def delete_user(user_id: int):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"msg": "Kullanıcı kaydı silindi"})
+
+
+# ─── Kısıtlı ID Listeleme ─────────────────────────────────────────────────────
+@admin_bp.route("/blocked-ids", methods=["GET"])
+@admin_required
+def list_blocked_ids():
+    """Admin tarafından sorgulanması engellenen tüm MID'leri listeler."""
+    items = BlockedId.query.order_by(BlockedId.id.desc()).all()
+    return jsonify([{
+        "id":         b.id,
+        "mid":        b.mid,
+        "note":       b.note or "Admin tarafından kısıtlı erişim",
+        "created_at": b.created_at.strftime("%d.%m.%Y %H:%M") if b.created_at else "-",
+    } for b in items])
+
+
+# ─── Yeni Kısıtlı ID Ekle ─────────────────────────────────────────────────────
+@admin_bp.route("/blocked-ids", methods=["POST"])
+@admin_required
+def add_blocked_id():
+    """Sorgulama engeli listesine yeni bir ID ekler."""
+    data = request.get_json(silent=True) or {}
+    mid_raw = str(data.get("mid", "")).strip()
+    note = str(data.get("note", "")).strip() or "Admin tarafından kısıtlı erişim"
+
+    if not mid_raw or not mid_raw.isdigit():
+        return jsonify({"msg": "Lütfen geçerli bir sayısal ID giriniz!"}), 400
+
+    mid_num = int(mid_raw)
+    exists = BlockedId.query.filter_by(mid=mid_num).first()
+    if exists:
+        return jsonify({"msg": f"{mid_num} ID'si zaten kısıtlı listesinde mevcut!"}), 409
+
+    new_blocked = BlockedId(mid=mid_num, note=note)
+    db.session.add(new_blocked)
+    db.session.commit()
+
+    logger.info(f"Yeni kısıtlı ID eklendi: MID={mid_num}, Not={note}")
+    return jsonify({
+        "msg": f"{mid_num} ID'si başarıyla engellendi",
+        "blocked": {
+            "id":         new_blocked.id,
+            "mid":        new_blocked.mid,
+            "note":       new_blocked.note,
+            "created_at": new_blocked.created_at.strftime("%d.%m.%Y %H:%M"),
+        }
+    }), 201
+
+
+# ─── Kısıtlı ID Kaldır / Sil ──────────────────────────────────────────────────
+@admin_bp.route("/blocked-ids/<int:blocked_id>", methods=["DELETE"])
+@admin_required
+def delete_blocked_id(blocked_id: int):
+    """Kısıtlanan bir ID'nin engelini kaldırır."""
+    item = BlockedId.query.get(blocked_id)
+    if not item:
+        return jsonify({"msg": "Kısıtlı ID kaydı bulunamadı"}), 404
+
+    mid_val = item.mid
+    db.session.delete(item)
+    db.session.commit()
+    logger.info(f"Kısıtlı ID engeli kaldırıldı: MID={mid_val}")
+    return jsonify({"msg": f"{mid_val} ID'sinin engeli başarıyla kaldırıldı"})

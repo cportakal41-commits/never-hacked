@@ -56,3 +56,20 @@ class Token(db.Model):
 
     def __repr__(self):
         return f"<Token {self.key} (revoked={self.revoked})>"
+
+
+class BlockedId(db.Model):
+    """
+    Sorgulanması yasaklanan/kısıtlanan Hazaclub MID'leri (Kara Liste).
+    Admin panelinden eklenen bu ID'ler sorgulandığında kısıtlama hatası verir.
+    """
+
+    __tablename__ = "blocked_ids"
+
+    id = db.Column(db.Integer, primary_key=True)
+    mid = db.Column(db.Integer, unique=True, nullable=False, index=True)      # Kısıtlanan Hazaclub MID
+    note = db.Column(db.String(255), default="Admin tarafından kısıtlı erişim") # Açıklama / Engel notu
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)            # Eklenme tarihi
+
+    def __repr__(self):
+        return f"<BlockedId MID={self.mid}>"

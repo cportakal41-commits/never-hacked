@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from ..services.hazaclub import get_user_data
 from .. import db
-from ..models import User, Token
+from ..models import User, Token, BlockedId
 
 logger = logging.getLogger(__name__)
 search_bp = Blueprint("search", __name__)
@@ -22,6 +22,13 @@ def search():
         return jsonify({"msg": "Geçersiz MID – yalnızca sayısal değer kabul edilir"}), 400
 
     mid_num = int(mid)
+
+    # Admin tarafından engellenen kısıtlı ID kontrolü
+    blocked = BlockedId.query.filter_by(mid=mid_num).first()
+    if blocked:
+        logger.warning(f"Kısıtlı ID sorgulanmaya çalışıldı – MID={mid_num}")
+        return jsonify({"msg": blocked.note or "Admin tarafından kısıtlı erişim"}), 403
+
     logger.info(f"Arama yapılıyor – MID={mid_num}")
     data = get_user_data(mid_num)
 

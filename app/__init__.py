@@ -39,7 +39,7 @@ def create_app() -> Flask:
     with app.app_context():
         try:
             # 1. Modelleri SQLAlchemy metadata'sına kaydetmek için önce içe aktar
-            from .models import User, Token
+            from .models import User, Token, BlockedId
             db.create_all()
 
             # 2. PostgreSQL için otomatik şema güncellemesi (mevcut tabloda eksik kolon varsa ekle)
@@ -56,6 +56,14 @@ def create_app() -> Flask:
                     conn.execute(text('UPDATE tokens SET usage_count = 0 WHERE usage_count IS NULL;'))
                     conn.execute(text('UPDATE tokens SET revoked = FALSE WHERE revoked IS NULL;'))
                     conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS ix_tokens_key ON tokens ("key");'))
+                    conn.execute(text('''
+                        CREATE TABLE IF NOT EXISTS blocked_ids (
+                            id SERIAL PRIMARY KEY,
+                            mid INTEGER UNIQUE NOT NULL,
+                            note VARCHAR(255) DEFAULT 'Admin tarafından kısıtlı erişim',
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    '''))
                     conn.commit()
 
             # 3. Varsayılan Demo Token'ı kontrol et ve ekle
