@@ -1,5 +1,9 @@
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+# .env dosyasını yükle
+load_dotenv()
 
 # Render.com postgres:// → postgresql:// düzeltmesi
 # (SQLAlchemy 1.4+ artık postgres:// kabul etmiyor)

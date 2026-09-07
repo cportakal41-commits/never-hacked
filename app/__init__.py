@@ -38,14 +38,35 @@ def create_app() -> Flask:
     # ── Veritabanı tablolarını ve varsayılan token'ı otomatik hazırla ──────────
     with app.app_context():
         try:
+            # 1. Modelleri SQLAlchemy metadata'sına kaydetmek için önce içe aktar
+            from .models import User, Token
             db.create_all()
-            from .models import Token
-            if not Token.query.first():
+
+            # 2. PostgreSQL için otomatik şema güncellemesi (mevcut tabloda eksik kolon varsa ekle)
+            if db.engine.dialect.name == "postgresql":
+                from sqlalchemy import text
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS "key" VARCHAR(64);'))
+                    conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS note VARCHAR(128) DEFAULT \'Genel Erişim\';'))
+                    conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS usage_count INTEGER DEFAULT 0;'))
+                    conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMP;'))
+                    conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS jti VARCHAR(36);'))
+                    conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS revoked BOOLEAN DEFAULT FALSE;'))
+                    conn.execute(text('UPDATE tokens SET "key" = \'NH-DEMO-\' || id WHERE "key" IS NULL;'))
+                    conn.execute(text('UPDATE tokens SET usage_count = 0 WHERE usage_count IS NULL;'))
+                    conn.execute(text('UPDATE tokens SET revoked = FALSE WHERE revoked IS NULL;'))
+                    conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS ix_tokens_key ON tokens ("key");'))
+                    conn.commit()
+
+            # 3. Varsayılan Demo Token'ı kontrol et ve ekle
+            demo_token = Token.query.filter_by(key="NH-DEMO-2026-KEY").first()
+            if not demo_token:
                 demo = Token(key="NH-DEMO-2026-KEY", note="İlk Demo Anahtarı")
                 db.session.add(demo)
                 db.session.commit()
+                logging.info("Varsayılan NH-DEMO-2026-KEY anahtarı hazırlandı.")
         except Exception as e:
-            logging.warning(f"Otomatik tablo oluşturma atlandı: {e}")
+            logging.error(f"Veritabanı başlatma/güncelleme hatası: {e}", exc_info=True)
 
     # ── JWT Blocklist callback ─────────────────────────────────────────────────
     from .services.token_manager import is_token_revoked
