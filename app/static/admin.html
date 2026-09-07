@@ -424,6 +424,7 @@ async function adminFetch(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (adminToken) {
     headers['Authorization'] = `Bearer ${adminToken}`;
+    headers['X-Admin-Key'] = adminToken;
   }
 
   const res = await fetch(path, { ...options, headers });

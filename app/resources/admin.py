@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin_api", __name__)
 
 
+import hashlib
+
 def get_current_admin_password() -> str:
     """Aktif admin şifresini güvenle döndürür."""
     p = current_app.config.get("ADMIN_PASSWORD")
@@ -17,31 +19,43 @@ def get_current_admin_password() -> str:
     return "NeverHacked2026!"
 
 
+def generate_admin_token(secret: str) -> str:
+    """Admin şifresi için güvenli hash oturum anahtarı üretir."""
+    salt = current_app.config.get("SECRET_KEY", "never_hacked_salt")
+    return hashlib.sha256(f"{salt}_{secret}".encode()).hexdigest()
+
+
 # ─── Admin Kimlik Doğrulama Dekoratörü ─────────────────────────────────────────
 def admin_required(f):
     """Admin paneli endpoint'lerini korur. Şifre veya admin token zorunludur."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        expected = get_current_admin_password()
+        expected_pass = get_current_admin_password()
+        expected_tok = generate_admin_token(expected_pass)
 
-        # 1. Header kontrolü (X-Admin-Key / X-Admin-Password)
-        header_key = request.headers.get("X-Admin-Key") or request.headers.get("X-Admin-Password")
-        if header_key and str(header_key).strip() == expected:
+        # Gelen anahtar (X-Admin-Key, X-Admin-Password veya Authorization Header)
+        auth_val = (
+            request.headers.get("X-Admin-Key") or
+            request.headers.get("X-Admin-Password") or
+            request.headers.get("Authorization", "")
+        ).strip()
+
+        if auth_val.startswith("Bearer "):
+            auth_val = auth_val[7:].strip()
+
+        # Doğrudan şifre veya geçerli admin session token'ı eşleşiyorsa izin ver!
+        if auth_val and auth_val in (expected_pass, expected_tok):
             return f(*args, **kwargs)
 
-        # 2. Bearer token kontrolü
-        auth_header = request.headers.get("Authorization", "").strip()
-        if auth_header.startswith("Bearer "):
-            token = auth_header[7:].strip()
-            if token == expected:
-                return f(*args, **kwargs)
+        # Alternatif JWT kontrolü
+        if auth_val:
             try:
                 from flask_jwt_extended import decode_token
-                decoded = decode_token(token)
+                decoded = decode_token(auth_val)
                 if decoded.get("sub") == "admin" or decoded.get("is_admin") is True:
                     return f(*args, **kwargs)
-            except Exception as e:
-                logger.warning(f"Admin token doğrulama hatası: {e}")
+            except Exception:
+                pass
 
         return jsonify({"msg": "Yetkisiz erişim! Lütfen admin şifresi ile giriş yapınız."}), 401
     return decorated
@@ -53,19 +67,17 @@ def admin_login():
     """Admin şifresi doğrulaması yapar ve admin oturum token'ı döner."""
     data = request.get_json(silent=True) or {}
     password = str(data.get("password") or "").strip()
-    expected = get_current_admin_password()
+    expected_pass = get_current_admin_password()
 
-    if not password or password != expected:
-        logger.warning(f"Admin login denemesi başarısız.")
+    if not password or password != expected_pass:
+        logger.warning("Admin login denemesi başarısız: şifre uyuşmuyor.")
         return jsonify({"msg": "Hatalı yönetici şifresi!"}), 401
 
-    from flask_jwt_extended import create_access_token
-    token = create_access_token(identity="admin", additional_claims={"is_admin": True})
-
+    admin_token = generate_admin_token(expected_pass)
     logger.info("Admin paneline başarılı giriş yapıldı.")
     return jsonify({
         "msg": "Giriş başarılı",
-        "admin_token": token,
+        "admin_token": admin_token,
     }), 200
 
 
