@@ -8,5 +8,4 @@ requests==2.31.0
 python-dotenv==1.0.0
 gunicorn==20.1.0
 Flask-Limiter==3.3.1
-# PostgreSQL için (Render/Production'da gerekli, local SQLite ile test edebilirsin):
-# psycopg2-binary==2.9.6
+psycopg2-binary==2.9.9

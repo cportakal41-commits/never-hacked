@@ -28,4 +28,4 @@ databases:
     region: frankfurt
     plan: free
     databaseName: never_hacked
-    user: postgres
+    user: never_hacked_admin
