@@ -1,0 +1,450 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Never Hacked – Yeşil Hacker Teması
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap');
+
+/* ── CSS Değişkenleri ────────────────────────────────────────────────────── */
+:root {
+  --clr-bg:          #050a05;
+  --clr-bg-card:     #0d1a0d;
+  --clr-bg-input:    #0a160a;
+  --clr-green:       #00ff41;
+  --clr-green-dim:   #00c832;
+  --clr-green-dark:  #003d10;
+  --clr-green-glow:  rgba(0, 255, 65, 0.15);
+  --clr-text:        #c8e6c8;
+  --clr-text-muted:  #5a8a5a;
+  --clr-border:      rgba(0, 255, 65, 0.2);
+  --clr-danger:      #ff4141;
+  --font-mono:       'Share Tech Mono', monospace;
+  --font-title:      'Orbitron', monospace;
+  --font-body:       'Inter', sans-serif;
+  --radius:          8px;
+  --transition:      0.25s ease;
+}
+
+/* ── Reset & Temel ───────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--clr-bg);
+  color: var(--clr-text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+  /* Izgara desen arka planı */
+  background-image:
+    linear-gradient(rgba(0,255,65,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,65,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── Tarayıcı Matrix Animasyonu (arkaplan) ───────────────────────────────── */
+.matrix-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.04;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,255,65,0.5) 2px,
+    rgba(0,255,65,0.5) 4px
+  );
+  animation: scanline 8s linear infinite;
+}
+
+@keyframes scanline {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100vh; }
+}
+
+/* ── Glow yardımcısı ─────────────────────────────────────────────────────── */
+.glow {
+  text-shadow:
+    0 0 10px var(--clr-green),
+    0 0 30px rgba(0,255,65,0.5),
+    0 0 60px rgba(0,255,65,0.2);
+}
+
+/* ── Başlık ──────────────────────────────────────────────────────────────── */
+.nh-header {
+  text-align: center;
+  padding: 3rem 1rem 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.nh-title {
+  font-family: var(--font-title);
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 900;
+  color: var(--clr-green);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.nh-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--clr-text-muted);
+  margin-top: 0.5rem;
+  letter-spacing: 0.1em;
+}
+
+/* Yanıp sönen imleç */
+.nh-subtitle::after {
+  content: '_';
+  animation: blink 1s step-start infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* ── Ana kart ────────────────────────────────────────────────────────────── */
+.nh-card {
+  background: var(--clr-bg-card);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  box-shadow:
+    0 0 20px rgba(0,255,65,0.05),
+    inset 0 1px 0 rgba(0,255,65,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.nh-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--clr-green), transparent);
+}
+
+/* ── Giriş alanı ─────────────────────────────────────────────────────────── */
+.nh-input {
+  background: var(--clr-bg-input) !important;
+  border: 1px solid var(--clr-border) !important;
+  color: var(--clr-green) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 1rem !important;
+  border-radius: var(--radius) !important;
+  padding: 0.75rem 1rem !important;
+  transition: border-color var(--transition), box-shadow var(--transition) !important;
+  letter-spacing: 0.05em;
+}
+
+.nh-input::placeholder { color: var(--clr-text-muted) !important; }
+
+.nh-input:focus {
+  outline: none !important;
+  border-color: var(--clr-green) !important;
+  box-shadow: 0 0 0 3px var(--clr-green-glow) !important;
+}
+
+/* Numaralı input okları gizle */
+.nh-input[type=number]::-webkit-inner-spin-button,
+.nh-input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* ── Butonlar ────────────────────────────────────────────────────────────── */
+.nh-btn {
+  background: transparent !important;
+  border: 1px solid var(--clr-green) !important;
+  color: var(--clr-green) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.9rem !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  border-radius: var(--radius) !important;
+  padding: 0.75rem 1.5rem !important;
+  cursor: pointer !important;
+  transition: all var(--transition) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.nh-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,255,65,0.1), transparent);
+  transition: left 0.4s ease;
+}
+
+.nh-btn:hover::before { left: 100%; }
+
+.nh-btn:hover {
+  background: rgba(0,255,65,0.08) !important;
+  box-shadow: 0 0 15px rgba(0,255,65,0.3) !important;
+}
+
+.nh-btn:active {
+  transform: scale(0.98) !important;
+  box-shadow: 0 0 8px rgba(0,255,65,0.5) !important;
+}
+
+.nh-btn-danger {
+  border-color: var(--clr-danger) !important;
+  color: var(--clr-danger) !important;
+}
+.nh-btn-danger:hover {
+  background: rgba(255,65,65,0.08) !important;
+  box-shadow: 0 0 15px rgba(255,65,65,0.3) !important;
+}
+
+/* ── Yükleme spinner ─────────────────────────────────────────────────────── */
+.nh-spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid var(--clr-green-dark);
+  border-top-color: var(--clr-green);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Sonuç kartı ─────────────────────────────────────────────────────────── */
+.result-card {
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius);
+  background: var(--clr-bg-card);
+  padding: 1.5rem;
+  animation: fadeIn 0.4s ease;
+  position: relative;
+}
+
+.result-card::before {
+  content: '> KULLANICI BİLGİLERİ';
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--clr-green-dim);
+  letter-spacing: 0.15em;
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Avatar */
+.result-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius);
+  border: 2px solid var(--clr-border);
+  object-fit: cover;
+  box-shadow: 0 0 15px var(--clr-green-glow);
+  flex-shrink: 0;
+}
+
+/* Kullanıcı adı */
+.result-nick {
+  font-family: var(--font-title);
+  font-size: 1.2rem;
+  color: var(--clr-green);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+/* Bilgi satırları */
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.86rem;
+  color: var(--clr-text);
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0,255,65,0.07);
+}
+
+.info-row:last-child { border-bottom: none; }
+
+.info-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.info-label {
+  color: var(--clr-green-dim);
+  min-width: 60px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.info-value {
+  color: #fff;
+  word-break: break-all;
+  font-family: var(--font-mono);
+}
+
+/* IP adresi vurgusu */
+.info-value.ip-val {
+  color: var(--clr-green);
+  font-weight: 600;
+}
+
+/* Kopyalama butonu */
+.copy-action-btn {
+  background: transparent;
+  border: 1px solid var(--clr-border);
+  color: var(--clr-green-dim);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.copy-action-btn:hover {
+  border-color: var(--clr-green);
+  color: #fff;
+  background: rgba(0, 255, 65, 0.15);
+}
+
+/* Mobil Duyarlılık (Responsive) */
+@media (max-width: 576px) {
+  .nh-header {
+    padding: 1.5rem 0.5rem 0.5rem;
+  }
+  .nh-title {
+    font-size: 1.8rem !important;
+  }
+  .nh-subtitle {
+    font-size: 0.75rem;
+  }
+  .nh-card {
+    padding: 1.2rem !important;
+  }
+  .result-avatar {
+    width: 64px;
+    height: 64px;
+  }
+  .result-nick {
+    font-size: 1.05rem;
+  }
+  .info-row {
+    font-size: 0.8rem;
+    padding: 0.4rem 0;
+  }
+  .info-label {
+    min-width: 48px;
+    font-size: 0.72rem;
+  }
+}
+
+/* ── Hata mesajı ─────────────────────────────────────────────────────────── */
+.nh-error {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--clr-danger);
+  border: 1px solid rgba(255,65,65,0.3);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  background: rgba(255,65,65,0.05);
+  letter-spacing: 0.05em;
+}
+
+.nh-error::before { content: '[HATA] '; }
+
+/* ── Login paneli ────────────────────────────────────────────────────────── */
+.login-panel .panel-title {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--clr-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Tab nav ─────────────────────────────────────────────────────────────── */
+.nh-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--clr-border);
+  padding-bottom: 0;
+}
+
+.nh-tab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--clr-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-bottom: -1px;
+}
+
+.nh-tab:hover { color: var(--clr-green); }
+.nh-tab.active {
+  color: var(--clr-green);
+  border-bottom-color: var(--clr-green);
+}
+
+/* ── Status badge ────────────────────────────────────────────────────────── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+}
+
+.status-badge.online {
+  background: rgba(0,255,65,0.1);
+  color: var(--clr-green);
+  border: 1px solid rgba(0,255,65,0.3);
+}
+
+.status-badge.offline {
+  background: rgba(255,65,65,0.1);
+  color: var(--clr-danger);
+  border: 1px solid rgba(255,65,65,0.3);
+}
+
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--clr-bg); }
+::-webkit-scrollbar-thumb { background: var(--clr-green-dark); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--clr-green-dim); }

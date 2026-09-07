@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="tr" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Never Hacked – Admin Kontrol Merkezi</title>
+  <meta name="description" content="Never Hacked Yönetim Konsolu. Token üretimi, lisans yönetimi ve sorgu istatistikleri.">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Hacker Teması -->
+  <link href="/static/css/theme.css" rel="stylesheet">
+
+  <style>
+    .stat-card {
+      background: var(--clr-bg-card);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card:hover {
+      border-color: var(--clr-green);
+      box-shadow: 0 0 15px var(--clr-green-glow);
+    }
+    .stat-value {
+      font-family: var(--font-title);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--clr-green);
+      letter-spacing: 0.05em;
+    }
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--clr-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 0.25rem;
+    }
+    .table-hacker {
+      --bs-table-bg: transparent;
+      --bs-table-color: var(--clr-text);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      margin-bottom: 0;
+    }
+    .table-hacker th {
+      color: var(--clr-green-dim);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      border-bottom-color: var(--clr-border);
+      padding: 0.75rem;
+    }
+    .table-hacker td {
+      border-bottom-color: rgba(0, 255, 65, 0.08);
+      vertical-align: middle;
+      padding: 0.75rem;
+    }
+    .token-badge {
+      background: rgba(0, 255, 65, 0.08);
+      color: var(--clr-green);
+      border: 1px solid var(--clr-border);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      font-weight: bold;
+      letter-spacing: 0.05em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .token-badge.revoked {
+      background: rgba(255, 65, 65, 0.1);
+      color: var(--clr-danger);
+      border-color: rgba(255, 65, 65, 0.3);
+      text-decoration: line-through;
+    }
+    .copy-btn {
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+    .copy-btn:hover {
+      opacity: 1;
+      color: #fff;
+    }
+  </style>
+</head>
+
+<body>
+<div class="matrix-bg" aria-hidden="true"></div>
+
+<div class="container-fluid position-relative py-4 px-md-5" style="z-index:1; max-width:1200px;">
+
+  <!-- ══ Üst Bar ═══════════════════════════════════════════════════════════ -->
+  <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom" style="border-color: var(--clr-border)!important;">
+    <div>
+      <h1 class="nh-title glow mb-0" style="font-size: clamp(1.5rem, 4vw, 2.5rem);">
+        <i class="bi bi-shield-shaded me-2"></i>ADMIN MERKEZİ
+      </h1>
+      <p class="nh-subtitle mb-0">Erişim Tokenı Üretimi & Sistem Yönetimi</p>
+    </div>
+
+    <div class="d-flex gap-2">
+      <button id="refreshBtn" class="nh-btn py-1 px-3" style="font-size:0.8rem!important">
+        <i class="bi bi-arrow-clockwise me-1"></i>Yenile
+      </button>
+      <a href="/" class="nh-btn py-1 px-3" style="font-size:0.8rem!important; text-decoration:none;">
+        <i class="bi bi-arrow-left-circle me-1"></i>Sorgu Ekranına Dön
+      </a>
+    </div>
+  </header>
+
+  <!-- ══ İstatistik Kartları ═══════════════════════════════════════════════ -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-value" id="statActiveTokens">0</div>
+        <div class="stat-label"><i class="bi bi-key me-1"></i>Aktif Token</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-value" style="color:var(--clr-danger)" id="statRevokedTokens">0</div>
+        <div class="stat-label"><i class="bi bi-x-circle me-1"></i>İptal Edilen</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-value" id="statSearches">0</div>
+        <div class="stat-label"><i class="bi bi-search me-1"></i>Toplam Sorgu</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stat-card">
+        <div class="stat-value" id="statUsers">0</div>
+        <div class="stat-label"><i class="bi bi-people me-1"></i>Kayıtlı Hedef</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Yeni Token Üretme Paneli ══════════════════════════════════════════ -->
+  <div class="nh-card p-4 mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+        <i class="bi bi-plus-circle me-2"></i>YENİ ERİŞİM TOKENI OLUŞTUR
+      </h5>
+    </div>
+
+    <div class="row g-2 align-items-center">
+      <div class="col-md-6">
+        <input
+          type="text"
+          id="newTokenNote"
+          class="form-control nh-input"
+          placeholder="Açıklama / Kime Ait (Örn: VIP Müşteri, Test Anahtarı)"
+          autocomplete="off"
+        >
+      </div>
+      <div class="col-md-3">
+        <input
+          type="text"
+          id="newCustomKey"
+          class="form-control nh-input"
+          placeholder="Özel Anahtar (Boş bırakılırsa otomatik üretilir)"
+          autocomplete="off"
+        >
+      </div>
+      <div class="col-md-3">
+        <button id="generateBtn" class="nh-btn w-100 py-2">
+          <i class="bi bi-lightning-charge-fill me-1"></i>Token Üret
+        </button>
+      </div>
+    </div>
+
+    <!-- Son Üretilen Token Bildirimi -->
+    <div id="newlyCreatedBox" class="d-none mt-3 p-3" style="background:rgba(0,255,65,0.05); border:1px dashed var(--clr-green); border-radius:var(--radius);">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+          <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--clr-green);">
+            <i class="bi bi-check2-circle me-1"></i>Yeni Token Hazır:
+          </span>
+          <span id="createdKeyDisplay" style="font-family:var(--font-mono); font-size:1rem; font-weight:bold; color:#fff; margin-left:8px;"></span>
+        </div>
+        <button id="copyCreatedBtn" class="nh-btn py-1 px-3" style="font-size:0.75rem!important">
+          <i class="bi bi-clipboard me-1"></i>Kopyala
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Token Yönetim Tablosu ═════════════════════════════════════════════ -->
+  <div class="nh-card p-4 mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+        <i class="bi bi-key-fill me-2"></i>ERİŞİM TOKENLARI LİSTESİ
+      </h5>
+      <span id="tokenCountLabel" class="status-badge online">0 Token</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hacker">
+        <thead>
+          <tr>
+            <th>Token Anahtarı</th>
+            <th>Açıklama / Not</th>
+            <th>Durum</th>
+            <th>Sorgu Sayısı</th>
+            <th>Oluşturulma</th>
+            <th>Son Kullanım</th>
+            <th class="text-end">İşlemler</th>
+          </tr>
+        </thead>
+        <tbody id="tokensTableBody">
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">
+              <span class="nh-spinner"></span>Yükleniyor...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ Sorgulanan Hedef Kullanıcılar ═════════════════════════════════════ -->
+  <div class="nh-card p-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+        <i class="bi bi-database-check me-2"></i>SORGULANAN HEDEF KULLANICILAR
+      </h5>
+      <span id="userCountLabel" class="status-badge online">0 Kayıt</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hacker">
+        <thead>
+          <tr>
+            <th>Avatar</th>
+            <th>MID</th>
+            <th>Kullanıcı Adı (Nick)</th>
+            <th>IP Adresi</th>
+            <th>Cihaz</th>
+            <th>Kayıt Tarihi</th>
+            <th class="text-end">Sil</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody">
+          <tr>
+            <td colspan="7" class="text-center py-4 text-muted">
+              <span class="nh-spinner"></span>Yükleniyor...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Never Hacked – Admin Paneli Scripti
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const $ = (id) => document.getElementById(id);
+
+// ─── Verileri Yükle ─────────────────────────────────────────────────────────
+async function loadAll() {
+  await Promise.all([loadStats(), loadTokens(), loadUsers()]);
+}
+
+// ─── 1. İstatistikler ────────────────────────────────────────────────────────
+async function loadStats() {
+  try {
+    const res = await fetch('/api/admin/stats');
+    if (!res.ok) return;
+    const d = await res.json();
+    $('statActiveTokens').textContent  = d.active_tokens;
+    $('statRevokedTokens').textContent = d.revoked_tokens;
+    $('statSearches').textContent      = d.total_searches;
+    $('statUsers').textContent         = d.total_users;
+  } catch (e) {
+    console.error("Stats hatası:", e);
+  }
+}
+
+// ─── 2. Token Listesi ───────────────────────────────────────────────────────
+async function loadTokens() {
+  const tbody = $('tokensTableBody');
+  try {
+    const res = await fetch('/api/admin/tokens');
+    if (!res.ok) throw new Error("Tokenlar getirilemedi");
+    const tokens = await res.json();
+
+    $('tokenCountLabel').textContent = `${tokens.length} Token`;
+
+    if (tokens.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-3 text-muted">Henüz token oluşturulmadı.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = tokens.map(t => {
+      const isRev = t.revoked;
+      const statusBadge = isRev
+        ? `<span class="badge" style="background:rgba(255,65,65,0.15); color:var(--clr-danger); border:1px solid rgba(255,65,65,0.3)">İPTAL</span>`
+        : `<span class="badge" style="background:rgba(0,255,65,0.15); color:var(--clr-green); border:1px solid rgba(0,255,65,0.3)">AKTİF</span>`;
+
+      return `
+        <tr>
+          <td>
+            <span class="token-badge ${isRev ? 'revoked' : ''}">
+              ${t.key}
+              <i class="bi bi-copy copy-btn ms-1" title="Kopyala" onclick="copyToClipboard('${t.key}')"></i>
+            </span>
+          </td>
+          <td style="color:#fff;">${escapeHtml(t.note)}</td>
+          <td>${statusBadge}</td>
+          <td style="color:var(--clr-green);">${t.usage_count} kez</td>
+          <td>${t.created_at}</td>
+          <td>${t.last_used_at}</td>
+          <td class="text-end">
+            <button class="nh-btn py-1 px-2 me-1" style="font-size:0.7rem!important" onclick="toggleToken(${t.id})">
+              ${isRev ? '<i class="bi bi-check-circle me-1"></i>Aktif Et' : '<i class="bi bi-slash-circle me-1"></i>İptal Et'}
+            </button>
+            <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.7rem!important" onclick="deleteToken(${t.id})">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+// ─── 3. Kullanıcılar Listesi ────────────────────────────────────────────────
+async function loadUsers() {
+  const tbody = $('usersTableBody');
+  try {
+    const res = await fetch('/api/admin/users');
+    if (!res.ok) throw new Error("Kullanıcılar getirilemedi");
+    const users = await res.json();
+
+    $('userCountLabel').textContent = `${users.length} Kayıt`;
+
+    if (users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-3 text-muted">Henüz sorgulanan kullanıcı yok.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td>
+          <img src="${u.avatar || ''}" style="width:36px; height:36px; border-radius:6px; border:1px solid var(--clr-border); object-fit:cover;"
+               onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 40 40\\'%3E%3Crect width=\\'40\\' height=\\'40\\' fill=\\'%230d1a0d\\'/ %3E%3Ctext x=\\'20\\' y=\\'25\\' text-anchor=\\'middle\\' fill=\\'%2300ff41\\' font-size=\\'18\\'%3E?%3C/text%3E%3C/svg%3E'">
+        </td>
+        <td style="color:var(--clr-green); font-weight:bold;">${u.mid}</td>
+        <td style="color:#fff;">${escapeHtml(u.nick || 'İsimsiz')}</td>
+        <td style="color:var(--clr-green-dim);">${u.ip}</td>
+        <td>${escapeHtml(u.device)}</td>
+        <td>${u.created_at}</td>
+        <td class="text-end">
+          <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.7rem!important" onclick="deleteUser(${u.id})">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+// ─── 4. Yeni Token Üret ─────────────────────────────────────────────────────
+$('generateBtn').addEventListener('click', async () => {
+  const note = $('newTokenNote').value.trim();
+  const customKey = $('newCustomKey').value.trim();
+  const btn = $('generateBtn');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="nh-spinner"></span>Üretiliyor...';
+
+  try {
+    const res = await fetch('/api/admin/tokens/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ note, custom_key: customKey }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.msg || "Token üretilemedi");
+
+    // Bildirim kutusunu göster
+    $('createdKeyDisplay').textContent = d.token.key;
+    $('newlyCreatedBox').classList.remove('d-none');
+    $('newTokenNote').value = '';
+    $('newCustomKey').value = '';
+
+    // Otomatik panoya kopyala
+    copyToClipboard(d.token.key);
+
+    await loadAll();
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-lightning-charge-fill me-1"></i>Token Üret';
+  }
+});
+
+// Kopyalama butonu
+$('copyCreatedBtn').addEventListener('click', () => {
+  const k = $('createdKeyDisplay').textContent;
+  if (k) copyToClipboard(k);
+});
+
+// ─── 5. Token Durumunu Değiştir (Revoke/Aktif) ──────────────────────────────
+async function toggleToken(id) {
+  try {
+    const res = await fetch(`/api/admin/tokens/${id}/toggle`, { method: 'POST' });
+    if (!res.ok) throw new Error("Durum değiştirilemedi");
+    await loadAll();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// ─── 6. Token Sil ───────────────────────────────────────────────────────────
+async function deleteToken(id) {
+  if (!confirm("Bu tokenı kalıcı olarak silmek istediğinize emin misiniz?")) return;
+  try {
+    const res = await fetch(`/api/admin/tokens/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("Token silinemedi");
+    await loadAll();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// ─── 7. Kullanıcı Sil ───────────────────────────────────────────────────────
+async function deleteUser(id) {
+  if (!confirm("Bu kullanıcı kaydını silmek istediğinize emin misiniz?")) return;
+  try {
+    const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("Kullanıcı silinemedi");
+    await loadAll();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// ─── Yardımcılar ────────────────────────────────────────────────────────────
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    // Geçici toast/bildirim
+    const el = document.createElement('div');
+    el.textContent = `Kopyalandı: ${text}`;
+    el.style.position = 'fixed';
+    el.style.bottom = '20px';
+    el.style.right = '20px';
+    el.style.background = 'var(--clr-green)';
+    el.style.color = '#000';
+    el.style.padding = '8px 16px';
+    el.style.borderRadius = '6px';
+    el.style.fontFamily = 'var(--font-mono)';
+    el.style.fontWeight = 'bold';
+    el.style.zIndex = '9999';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2000);
+  }).catch(() => {
+    alert("Kopyalandı: " + text);
+  });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[tag] || tag));
+}
+
+$('refreshBtn').addEventListener('click', loadAll);
+
+// Başlangıçta yükle
+loadAll();
+</script>
+</body>
+</html>

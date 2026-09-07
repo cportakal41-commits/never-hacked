@@ -1,0 +1,36 @@
+# Ortam değişkenleri – ASLA commit etme!
+.env
+*.env
+instance/
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Flask migrations (ilk init'ten sonra commit ET, sonraki migrate'leri de ekle)
+# migrations/ → bunu commit etmen gerekiyor
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log

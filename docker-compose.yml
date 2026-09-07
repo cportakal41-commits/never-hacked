@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  # PostgreSQL veritabanı servisi
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: never_hacked
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flask web uygulaması
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/never_hacked
+      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "5000:5000"
+    # Veritabanı migration'larını otomatik çalıştır
+    command: >
+      sh -c "flask db upgrade && gunicorn -b 0.0.0.0:5000 --workers=2 --timeout=60 'app:create_app()'"
+
+volumes:
+  pgdata:
+    # Postgres verisini kalıcı olarak saklar

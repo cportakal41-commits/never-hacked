@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="tr" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Never Hacked – Kullanıcı İstihbarat Sistemi</title>
+  <meta name="description" content="Hazaclub kullanıcı sorgulama sistemi.">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Hacker Teması -->
+  <link href="/static/css/theme.css" rel="stylesheet">
+
+  <style>
+    /* Kopyalama Toast Bildirimi */
+    #copyToast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--clr-green);
+      color: #050a05;
+      font-family: var(--font-mono);
+      font-weight: bold;
+      font-size: 0.85rem;
+      padding: 8px 18px;
+      border-radius: 6px;
+      box-shadow: 0 0 20px var(--clr-green-glow);
+      z-index: 9999;
+      opacity: 0;
+      transition: all 0.25s ease-out;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #copyToast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Avatar üstü Tümünü Kopyala metni (arkalıksız, ikonsuz, butonsuz) */
+    .avatar-copy-text {
+      background: transparent !important;
+      border: none !important;
+      color: var(--clr-green-dim);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      letter-spacing: 0.05em;
+      padding: 0 !important;
+      margin-bottom: 6px;
+      transition: all 0.2s ease;
+      display: inline-block;
+      user-select: none;
+    }
+    .avatar-copy-text:hover {
+      color: #fff;
+      text-shadow: 0 0 10px var(--clr-green);
+    }
+  </style>
+</head>
+
+<body>
+<!-- Matrix arka plan tarama animasyonu -->
+<div class="matrix-bg" aria-hidden="true"></div>
+
+<!-- Kopyalandı Bildirim Balonu -->
+<div id="copyToast"><i class="bi bi-clipboard-check-fill"></i> Panoya Kopyalandı!</div>
+
+<div class="container position-relative px-3 pt-3" style="z-index:1; max-width:650px;">
+
+  <!-- ══ Başlık Bölümü ═════════════════════════════════════════════════════ -->
+  <header class="nh-header pt-2 pb-3">
+    <h1 class="nh-title glow mb-1">Never Hacked</h1>
+    <p class="nh-subtitle mb-0">Kullanıcı İstihbarat & Sorgulama</p>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- 1. GİRİŞ BÖLÜMÜ (Token Girişi)                                          -->
+  <!-- Giriş yapıldığında BU KISIM TAMAMEN KAYBOLUR!                          -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="sectionLogin" class="mt-2">
+    <div class="nh-card p-3 p-sm-4">
+      <div class="login-panel mb-2">
+        <p class="panel-title mb-1">
+          <i class="bi bi-shield-lock-fill me-1 text-success"></i>Erişim Doğrulaması
+        </p>
+      </div>
+      <p style="font-family:var(--font-mono); font-size:0.8rem; color:var(--clr-text-muted); margin-bottom:1.2rem;">
+        Devam etmek için erişim tokenınızı giriniz:
+      </p>
+
+      <div class="mb-3">
+        <label for="tokenInput" class="form-label" style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-text-muted); text-transform:uppercase; letter-spacing:.1em;">
+          Erişim Tokenı
+        </label>
+        <div class="input-group">
+          <span class="input-group-text nh-input" style="border-right:none; background:transparent!important; color:var(--clr-green)!important;">
+            <i class="bi bi-key-fill"></i>
+          </span>
+          <input
+            type="text"
+            id="tokenInput"
+            class="form-control nh-input"
+            placeholder="Örn: NH-DEMO-2026-KEY"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+          >
+        </div>
+      </div>
+
+      <button id="loginBtn" class="nh-btn w-100 py-2" style="font-size:0.95rem!important;">
+        <i class="bi bi-unlock-fill me-2"></i>Sisteme Bağlan
+      </button>
+
+      <div id="loginError" class="nh-error mt-3 d-none"></div>
+
+      <div class="mt-3 text-center" style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-text-muted);">
+        Demo Erişim Anahtarı: <code style="color:var(--clr-green); cursor:pointer;" id="quickDemoKey">NH-DEMO-2026-KEY</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- 2. ARAMA BÖLÜMÜ                                                        -->
+  <!-- Giriş yapıldıktan sonra SADECE BU KISIM KALIR!                         -->
+  <!-- Tamamen Mobil Uyumlu (Responsive)                                      -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="sectionSearch" class="d-none mt-2">
+    <div class="nh-card p-3 p-sm-4">
+      
+      <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom" style="border-color: rgba(0,255,65,0.1)!important;">
+        <span style="font-family:var(--font-mono); font-size:0.78rem; color:var(--clr-green-dim); letter-spacing:0.1em; text-transform:uppercase;">
+          <i class="bi bi-crosshair me-1"></i>Hedef ID Sorgula
+        </span>
+      </div>
+
+      <!-- Responsive Arama Formu (Mobilde dikey veya yan yana uyumlu) -->
+      <div class="row g-2 mt-1 mb-2">
+        <div class="col-12 col-sm">
+          <input
+            type="number"
+            id="midInput"
+            class="form-control nh-input w-100"
+            placeholder="Hedef ID Giriniz..."
+            min="1"
+            autocomplete="off"
+            pattern="[0-9]*"
+            inputmode="numeric"
+            style="min-height: 46px;"
+          >
+        </div>
+        <div class="col-12 col-sm-auto">
+          <button id="searchBtn" class="nh-btn w-100 px-sm-4" style="min-height: 46px;">
+            <i class="bi bi-search me-1"></i>Sorgula
+          </button>
+        </div>
+      </div>
+
+      <div id="searchError" class="nh-error d-none my-2"></div>
+
+      <!-- ── Sonuç Kartı ── -->
+      <div id="result" class="result-card d-none mt-3">
+        
+        <div class="d-flex flex-column flex-sm-row align-items-center align-items-sm-start gap-3">
+          
+          <!-- Sol Kısım: Avatar ve Tam Üstünde Düz Metin "Tümünü Kopyala" -->
+          <div class="d-flex flex-column align-items-center flex-shrink-0">
+            <span class="avatar-copy-text" id="copyAllBtn" role="button" title="Tüm bilgileri kopyala">Tümünü Kopyala</span>
+            <img
+              id="avatar"
+              src=""
+              alt="Profil Avatarı"
+              class="result-avatar"
+              onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 80 80\'%3E%3Crect width=\'80\' height=\'80\' fill=\'%230d1a0d\'/%3E%3Ctext x=\'40\' y=\'50\' text-anchor=\'middle\' fill=\'%2300ff41\' font-size=\'32\' font-family=\'monospace\'%3E%3F%3C/text%3E%3C/svg%3E'"
+            >
+          </div>
+
+          <!-- Sağ Kısım: Bilgiler (Altındaki kopyala butonları kaldırıldı, sadece temiz bilgi) -->
+          <div class="flex-grow-1 w-100">
+            
+            <!-- Nick -->
+            <div class="mb-2 text-center text-sm-start">
+              <div id="nick" class="result-nick"></div>
+            </div>
+
+            <!-- ID (Sadece ID yazısı) -->
+            <div class="info-row">
+              <div class="info-content">
+                <span class="info-label"><i class="bi bi-fingerprint me-1"></i>ID</span>
+                <span class="info-value" id="infoMid">—</span>
+              </div>
+            </div>
+
+            <!-- IP Adresi -->
+            <div class="info-row">
+              <div class="info-content">
+                <span class="info-label"><i class="bi bi-globe me-1"></i>IP</span>
+                <span class="info-value ip-val" id="infoIp">—</span>
+              </div>
+            </div>
+
+            <!-- Cihaz -->
+            <div class="info-row">
+              <div class="info-content">
+                <span class="info-label"><i class="bi bi-phone me-1"></i>CİHAZ</span>
+                <span class="info-value" id="infoDevice">—</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div><!-- /result -->
+
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Never Hacked – Token Tabanlı Giriş & Arama Mantığı
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+let accessToken = localStorage.getItem('nh_access_token') || null;
+
+const $    = (id) => document.getElementById(id);
+const show = (el) => el.classList.remove('d-none');
+const hide = (el) => el.classList.add('d-none');
+
+// ─── UI Durumunu Ayarla ─────────────────────────────────────────────────────
+// Giriş yapılmışsa: GİRİŞ KISMI TAMAMEN KAYBOLUR, SADECE ARA KISMI KALIR!
+function renderState() {
+  if (accessToken) {
+    hide($('sectionLogin'));
+    show($('sectionSearch'));
+    $('midInput').focus();
+  } else {
+    show($('sectionLogin'));
+    hide($('sectionSearch'));
+    hide($('result'));
+    $('tokenInput').focus();
+  }
+}
+
+// ─── Kopyalama Yardımcısı ───────────────────────────────────────────────────
+function copyText(val) {
+  if (!val || val === '—' || val === 'Bilinmiyor') return;
+  navigator.clipboard.writeText(val).then(() => {
+    showToast();
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = val;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast();
+  });
+}
+
+function showToast() {
+  const t = $('copyToast');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// Avatarın tam üstündeki "Tümünü Kopyala" Butonu
+$('copyAllBtn').addEventListener('click', () => {
+  const nick   = $('nick').textContent.trim();
+  const id     = $('infoMid').textContent.trim();
+  const ip     = $('infoIp').textContent.trim();
+  const device = $('infoDevice').textContent.trim();
+
+  const formatted = `NEVER HACKED\n\nNick: ${nick}\nID: ${id}\nIP: ${ip}\nCihaz: ${device}`;
+  copyText(formatted);
+});
+
+// ─── Yardımcı API Fonksiyonu ────────────────────────────────────────────────
+async function api(path, options = {}) {
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (accessToken) {
+    headers['Authorization'] = `Bearer ${accessToken}`;
+  }
+
+  const resp = await fetch(path, { ...options, headers });
+  const json = await resp.json().catch(() => ({}));
+
+  if (!resp.ok) {
+    if (resp.status === 401 || resp.status === 403 || resp.status === 422) {
+      if (accessToken) {
+        accessToken = null;
+        localStorage.removeItem('nh_access_token');
+        renderState();
+      }
+    }
+    throw new Error(json.msg || `Sunucu Hatası (${resp.status})`);
+  }
+  return json;
+}
+
+// ─── GİRİŞ YAPMA (Token ile) ────────────────────────────────────────────────
+$('loginBtn').addEventListener('click', doLogin);
+$('tokenInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// Demo key tıklandığında otomatik yapıştır ve gir
+$('quickDemoKey').addEventListener('click', () => {
+  $('tokenInput').value = $('quickDemoKey').textContent.trim();
+  doLogin();
+});
+
+async function doLogin() {
+  const key = $('tokenInput').value.trim();
+  const btn = $('loginBtn');
+
+  if (!key) {
+    show($('loginError'));
+    $('loginError').textContent = 'Lütfen bir erişim tokenı giriniz.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="nh-spinner"></span>Bağlanıyor...';
+  hide($('loginError'));
+
+  try {
+    const data = await api('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ token: key }),
+    });
+
+    accessToken = data.access_token;
+    localStorage.setItem('nh_access_token', accessToken);
+
+    // GİRİŞ KAYBOLUR, SADECE ARA KISMI AÇILIR!
+    renderState();
+
+  } catch (err) {
+    show($('loginError'));
+    $('loginError').textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-unlock-fill me-2"></i>Sisteme Bağlan';
+  }
+}
+
+// ─── ARAMA YAPMA (ID ile) ───────────────────────────────────────────────────
+$('searchBtn').addEventListener('click', doSearch);
+$('midInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doSearch();
+});
+
+async function doSearch() {
+  const idVal = $('midInput').value.trim();
+  const btn = $('searchBtn');
+
+  if (!idVal || !/^\d+$/.test(idVal)) {
+    show($('searchError'));
+    $('searchError').textContent = 'Lütfen geçerli bir sayısal ID giriniz.';
+    hide($('result'));
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="nh-spinner"></span>Sorgulanıyor...';
+  hide($('searchError'));
+  hide($('result'));
+
+  try {
+    const data = await api(`/api/search?mid=${encodeURIComponent(idVal)}`);
+
+    // Sadece Nick, ID, IP, Cihaz ve Avatar gösteriliyor!
+    $('avatar').src = data.avatar || '';
+    $('nick').textContent = data.nick || 'İsimsiz Kullanıcı';
+    $('infoMid').textContent = data.mid || idVal;
+    $('infoIp').textContent = data.ip || 'Bilinmiyor';
+    $('infoDevice').textContent = data.device || 'Bilinmiyor';
+
+    show($('result'));
+
+  } catch (err) {
+    show($('searchError'));
+    $('searchError').textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-search me-1"></i>Sorgula';
+  }
+}
+
+// Başlangıç durumu
+renderState();
+</script>
+</body>
+</html>
