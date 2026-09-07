@@ -9,31 +9,39 @@ logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin_api", __name__)
 
 
+def get_current_admin_password() -> str:
+    """Aktif admin şifresini güvenle döndürür."""
+    p = current_app.config.get("ADMIN_PASSWORD")
+    if p and str(p).strip():
+        return str(p).strip()
+    return "NeverHacked2026!"
+
+
 # ─── Admin Kimlik Doğrulama Dekoratörü ─────────────────────────────────────────
 def admin_required(f):
     """Admin paneli endpoint'lerini korur. Şifre veya admin token zorunludur."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        admin_pass = current_app.config.get("ADMIN_PASSWORD", "NeverHacked2026!")
+        expected = get_current_admin_password()
 
-        # 1. Header kontrolü (X-Admin-Key)
+        # 1. Header kontrolü (X-Admin-Key / X-Admin-Password)
         header_key = request.headers.get("X-Admin-Key") or request.headers.get("X-Admin-Password")
-        if header_key and header_key == admin_pass:
+        if header_key and str(header_key).strip() == expected:
             return f(*args, **kwargs)
 
         # 2. Bearer token kontrolü
-        auth_header = request.headers.get("Authorization", "")
+        auth_header = request.headers.get("Authorization", "").strip()
         if auth_header.startswith("Bearer "):
-            token = auth_header.split(" ")[1]
-            if token == admin_pass:
+            token = auth_header[7:].strip()
+            if token == expected:
                 return f(*args, **kwargs)
             try:
                 from flask_jwt_extended import decode_token
                 decoded = decode_token(token)
-                if decoded.get("sub") == "admin" or decoded.get("is_admin"):
+                if decoded.get("sub") == "admin" or decoded.get("is_admin") is True:
                     return f(*args, **kwargs)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"Admin token doğrulama hatası: {e}")
 
         return jsonify({"msg": "Yetkisiz erişim! Lütfen admin şifresi ile giriş yapınız."}), 401
     return decorated
@@ -44,10 +52,11 @@ def admin_required(f):
 def admin_login():
     """Admin şifresi doğrulaması yapar ve admin oturum token'ı döner."""
     data = request.get_json(silent=True) or {}
-    password = data.get("password", "").strip()
-    admin_pass = current_app.config.get("ADMIN_PASSWORD", "NeverHacked2026!")
+    password = str(data.get("password") or "").strip()
+    expected = get_current_admin_password()
 
-    if not password or password != admin_pass:
+    if not password or password != expected:
+        logger.warning(f"Admin login denemesi başarısız.")
         return jsonify({"msg": "Hatalı yönetici şifresi!"}), 401
 
     from flask_jwt_extended import create_access_token

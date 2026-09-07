@@ -12,7 +12,8 @@ class Config:
     # ─── Genel Ayarlar ──────────────────────────────────────────────────────────
     SECRET_KEY = os.getenv("SECRET_KEY", "CHANGE_ME")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "CHANGE_ME")
-    ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "NeverHacked2026!")
+    _admin_env = os.getenv("ADMIN_PASSWORD")
+    ADMIN_PASSWORD = _admin_env.strip() if _admin_env and _admin_env.strip() else "NeverHacked2026!"
 
     # Veritabanı bağlantısı (varsayılan: Docker Compose'daki postgres servisi)
     SQLALCHEMY_DATABASE_URI = _db_url

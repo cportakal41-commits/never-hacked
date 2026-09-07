@@ -121,7 +121,11 @@
             class="form-control nh-input"
             placeholder="Şifrenizi giriniz..."
             autocomplete="current-password"
+            style="border-right:none!important;"
           >
+          <button class="btn nh-input" type="button" id="togglePassBtn" style="border-left:none!important; color:var(--clr-green)!important;" title="Şifreyi Göster / Gizle">
+            <i class="bi bi-eye" id="passEyeIcon"></i>
+          </button>
         </div>
       </div>
 
@@ -130,6 +134,10 @@
       </button>
 
       <div id="adminLoginError" class="nh-error mt-3 d-none"></div>
+
+      <div class="mt-2 text-center" style="font-family:var(--font-mono); font-size:0.72rem; color:var(--clr-text-muted);">
+        Varsayılan Şifre: <code style="color:var(--clr-green); cursor:pointer;" id="quickFillPass">NeverHacked2026!</code>
+      </div>
 
       <div class="mt-4 pt-2 border-top" style="border-color: rgba(0,255,65,0.1)!important;">
         <a href="/" style="font-family:var(--font-mono); font-size:0.78rem; color:var(--clr-text-muted); text-decoration:none;">
@@ -385,6 +393,24 @@ async function doAdminLogin() {
   }
 }
 
+// ─── Şifre Göster / Gizle ve Hızlı Doldurma ─────────────────────────────────
+$('togglePassBtn').addEventListener('click', () => {
+  const inp = $('adminPassInput');
+  const icon = $('passEyeIcon');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.classList.replace('bi-eye', 'bi-eye-slash');
+  } else {
+    inp.type = 'password';
+    icon.classList.replace('bi-eye-slash', 'bi-eye');
+  }
+});
+
+$('quickFillPass').addEventListener('click', () => {
+  $('adminPassInput').value = $('quickFillPass').textContent.trim();
+  doAdminLogin();
+});
+
 // ─── Admin Çıkış Yap ────────────────────────────────────────────────────────
 $('adminLogoutBtn').addEventListener('click', () => {
   adminToken = null;
@@ -393,6 +419,7 @@ $('adminLogoutBtn').addEventListener('click', () => {
 });
 
 // ─── Korumalı Admin API İsteği ──────────────────────────────────────────────
+let isHandlingSessionExpiry = false;
 async function adminFetch(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers };
   if (adminToken) {
@@ -401,10 +428,14 @@ async function adminFetch(path, options = {}) {
 
   const res = await fetch(path, { ...options, headers });
   if (res.status === 401 || res.status === 403) {
-    adminToken = null;
-    localStorage.removeItem('nh_admin_token');
-    renderAdminState();
-    throw new Error("Oturum süreniz doldu, lütfen tekrar şifre giriniz.");
+    if (!isHandlingSessionExpiry) {
+      isHandlingSessionExpiry = true;
+      adminToken = null;
+      localStorage.removeItem('nh_admin_token');
+      renderAdminState();
+      setTimeout(() => { isHandlingSessionExpiry = false; }, 800);
+    }
+    throw new Error("Oturum yetkilendirilemedi");
   }
   return res;
 }
@@ -412,7 +443,9 @@ async function adminFetch(path, options = {}) {
 // ─── Verileri Yükle ─────────────────────────────────────────────────────────
 async function loadAll() {
   if (!adminToken) return;
-  await Promise.all([loadStats(), loadTokens(), loadUsers()]);
+  try {
+    await Promise.all([loadStats(), loadTokens(), loadUsers()]);
+  } catch (_) { }
 }
 
 // ─── 1. İstatistikler ────────────────────────────────────────────────────────
