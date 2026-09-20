@@ -166,17 +166,40 @@ def create_app() -> Flask:
                     );
                 '''))
 
+                conn.execute(text('''
+                    CREATE TABLE IF NOT EXISTS system_settings (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        key VARCHAR(64) UNIQUE NOT NULL,
+                        value TEXT NOT NULL,
+                        description VARCHAR(255) DEFAULT '',
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                ''' if db.engine.dialect.name == "sqlite" else '''
+                    CREATE TABLE IF NOT EXISTS system_settings (
+                        id SERIAL PRIMARY KEY,
+                        key VARCHAR(64) UNIQUE NOT NULL,
+                        value TEXT NOT NULL,
+                        description VARCHAR(255) DEFAULT '',
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                '''))
+
                 try:
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_treasure_scan_logs_token ON treasure_scan_logs (token_key);'))
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_reward_cooldowns_token ON reward_cooldowns (token_key);'))
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_treasure_claim_logs_token ON treasure_claim_logs (token_key);'))
-                    # Reset any existing cooldowns
                     conn.execute(text('DELETE FROM reward_cooldowns;'))
                 except Exception:
                     pass
                 conn.commit()
 
             # 3. Varsayılan Demo Token'ı kontrol et ve ekle
+                        # Varsayılan Hazaclub tarama ayarlarını kontrol et ve başlat
+            from .models import SystemSetting
+            if not SystemSetting.query.filter_by(key="scan_token").first():
+                SystemSetting.set_setting("scan_token", "4I+vagAAAAA2uhkGAAAAAKfZSLF5R8KsAA==", "Aktif Hazaclub Tarama Tokeni")
+            if not SystemSetting.query.filter_by(key="scan_mid").first():
+                SystemSetting.set_setting("scan_mid", "102349366", "Aktif Hazaclub Tarama MID")
             demo_token = Token.query.filter_by(key="NH-DEMO-2026-KEY").first()
             if not demo_token:
                 demo = Token(key="NH-DEMO-2026-KEY", note="İlk Demo Anahtarı")

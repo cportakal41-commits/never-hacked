@@ -358,6 +358,57 @@
     <!-- SEKME 2: HAZİNE & ÖDÜL İŞLEMLERİ (TÜM İŞLEM KAYITLARI)                     -->
     <!-- ═════════════════════════════════════════════════════════════════════════ -->
     <div id="tabClaims" class="admin-tab-content d-none">
+      <!-- Canlı Hazaclub Tarama Hesabı Ayarları (Anlık Güncelleme) -->
+      <div class="nh-card p-4 mb-4" style="background:rgba(0, 255, 65, 0.03); border:1px solid var(--clr-green); box-shadow:0 0 15px rgba(0,255,65,0.15);">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom" style="border-color: rgba(0,255,65,0.2)!important;">
+          <div>
+            <h5 class="mb-1" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.15rem;">
+              <i class="bi bi-radar me-2"></i>HAZACLUB CANLI TARAMA HESABI AYARLARI (ANLIK GÜNCELLEME)
+            </h5>
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+              Sitede "Taramayı Başlat" butonuna basıldığında 50 sayfayı tarayan Hazaclub hesabıdır. Token patladığında buraya yenisini yazıp kaydedin; <strong>anında aktif olur, sunucuyu yeniden başlatmaya gerek yoktur!</strong>
+            </p>
+          </div>
+          <span class="status-badge online" id="scanSettingUpdatedAt">Son Güncelleme: -</span>
+        </div>
+
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label" style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-green-dim); text-transform:uppercase;">
+              Hazaclub Tarama ID (h_mid)
+            </label>
+            <input
+              type="number"
+              id="settingScanMid"
+              class="form-control nh-input"
+              placeholder="Örn: 102349366"
+              autocomplete="off"
+            >
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-green-dim); text-transform:uppercase;">
+              Hazaclub Tarama Tokeni (h_token)
+            </label>
+            <input
+              type="text"
+              id="settingScanToken"
+              class="form-control nh-input"
+              placeholder="Örn: 4I+vagAAAAA2uhkGAAAAAKfZSLF5R8KsAA=="
+              autocomplete="off"
+            >
+          </div>
+          <div class="col-md-3">
+            <button id="saveScanAccountBtn" class="nh-btn w-100 py-2" style="font-weight:bold; letter-spacing:0.05em;">
+              <i class="bi bi-floppy-fill me-1"></i>ANLIK KAYDET
+            </button>
+          </div>
+        </div>
+
+        <div id="saveScanAccountSuccess" class="alert alert-success mt-3 py-2 px-3 d-none font-monospace" style="background:rgba(0,255,65,0.1); border-color:#00ff41; color:#00ff41; font-size:0.82rem;">
+        </div>
+        <div id="saveScanAccountError" class="nh-error mt-3 d-none"></div>
+      </div>
+
       <div class="nh-card p-4 mb-4">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-2 border-bottom" style="border-color: rgba(0,255,65,0.2)!important;">
           <div>
@@ -700,6 +751,7 @@ async function loadAll() {
       loadStats(),
       loadTokens(),
       loadClaims(),
+      loadScanAccountSettings(),
       loadTreasureCooldowns(),
       loadBlockedIds(),
       loadUsers()
@@ -1147,6 +1199,61 @@ function escapeHtml(str) {
 }
 
 $('refreshBtn')?.addEventListener('click', loadAll);
+
+
+// ─── Canlı Hazaclub Tarama Hesabı Ayarları (Anlık Güncelleme) ────────────────
+async function loadScanAccountSettings() {
+  try {
+    const res = await adminFetch('/api/admin/settings/scan-account');
+    if (!res.ok) return;
+    const data = await res.json();
+    if ($('settingScanMid')) $('settingScanMid').value = data.scan_mid || '';
+    if ($('settingScanToken')) $('settingScanToken').value = data.scan_token || '';
+    if ($('scanSettingUpdatedAt')) $('scanSettingUpdatedAt').textContent = `Son Güncelleme: ${data.updated_at || 'Varsayılan'}`;
+  } catch (e) {
+    console.error("Tarama ayarları yüklenemedi:", e);
+  }
+}
+
+$('saveScanAccountBtn')?.addEventListener('click', async () => {
+  const mid = $('settingScanMid').value.trim();
+  const token = $('settingScanToken').value.trim();
+  const btn = $('saveScanAccountBtn');
+  const succ = $('saveScanAccountSuccess');
+  const err = $('saveScanAccountError');
+
+  hide(succ);
+  hide(err);
+
+  if (!mid || !token) {
+    show(err);
+    err.textContent = "Lütfen hem Hazaclub ID (h_mid) hem de Hazaclub Token (h_token) giriniz.";
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="nh-spinner"></span>Kaydediliyor...';
+
+  try {
+    const res = await adminFetch('/api/admin/settings/scan-account', {
+      method: 'POST',
+      body: JSON.stringify({ scan_mid: mid, scan_token: token })
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.msg || "Kaydedilemedi");
+
+    show(succ);
+    succ.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i>${d.msg || 'Hazaclub tarama hesabı anında güncellendi!'}`;
+    if ($('scanSettingUpdatedAt')) $('scanSettingUpdatedAt').textContent = 'Son Güncelleme: Şimdi';
+    setTimeout(() => hide(succ), 5000);
+  } catch (e) {
+    show(err);
+    err.textContent = "Hata: " + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-floppy-fill me-1"></i>ANLIK KAYDET';
+  }
+});
 
 // Başlangıç durumu
 renderAdminState();

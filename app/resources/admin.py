@@ -4,7 +4,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
 from .. import db
-from ..models import Token, User, BlockedId, TreasureScanLog, RewardCooldown, TreasureClaimLog
+from ..models import Token, User, BlockedId, TreasureScanLog, RewardCooldown, TreasureClaimLog, SystemSetting
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin_api", __name__)
@@ -382,3 +382,45 @@ def delete_user(user_id: int):
     db.session.delete(user)
     db.session.commit()
     return jsonify({"msg": "Kullanıcı kaydı silindi"})
+
+
+# ─── Canlı Hazaclub Tarama Hesabı Ayarları (Anlık Güncelleme) ──────────────────
+@admin_bp.route("/settings/scan-account", methods=["GET"])
+@admin_required
+def get_scan_account_settings():
+    """Mevcut Hazaclub tarama tokeni ve ID'sini getirir."""
+    token = SystemSetting.get_setting("scan_token", "4I+vagAAAAA2uhkGAAAAAKfZSLF5R8KsAA==")
+    mid = SystemSetting.get_setting("scan_mid", "102349366")
+    rec = SystemSetting.query.filter_by(key="scan_token").first()
+    updated_at = rec.updated_at.strftime("%d.%m.%Y %H:%M") if rec and rec.updated_at else "Varsayılan"
+
+    return jsonify({
+        "scan_token": token,
+        "scan_mid": mid,
+        "updated_at": updated_at
+    })
+
+
+@admin_bp.route("/settings/scan-account", methods=["POST"])
+@admin_required
+def update_scan_account_settings():
+    """Admin panelinden yeni Hazaclub tarama tokeni ve ID'sini anında kaydeder."""
+    data = request.get_json(silent=True) or {}
+    new_token = str(data.get("scan_token") or "").strip()
+    new_mid = str(data.get("scan_mid") or "").strip()
+
+    if not new_token:
+        return jsonify({"msg": "Lütfen geçerli bir Hazaclub tokeni giriniz!"}), 400
+
+    if not new_mid or not new_mid.isdigit():
+        return jsonify({"msg": "Lütfen geçerli bir sayısal Hazaclub ID (MID) giriniz!"}), 400
+
+    SystemSetting.set_setting("scan_token", new_token, "Aktif Hazaclub Tarama Tokeni")
+    SystemSetting.set_setting("scan_mid", new_mid, "Aktif Hazaclub Tarama MID")
+
+    logger.info(f"Admin Hazaclub tarama hesabını anlık güncelledi: MID={new_mid}")
+    return jsonify({
+        "msg": "Hazaclub tarama hesabı anında güncellendi! Yeni taramalar bu hesapla yapılacak.",
+        "scan_token": new_token,
+        "scan_mid": new_mid
+    })

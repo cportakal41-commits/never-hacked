@@ -103,10 +103,15 @@ def scan_treasure_grid(token_key: str, token_note: str = "Genel Kullanıcı"):
         if c.cooldown_until > now
     }
 
-    # Tarama için aktif Hazaclub hesabı bilgileri (ortam değişkeninden veya varsayılandan)
-    scan_token = os.environ.get("HAZACLUB_SCAN_TOKEN", "4I+vagAAAAA2uhkGAAAAAKfZSLF5R8KsAA==").strip()
+    # Tarama için aktif Hazaclub hesabı bilgileri: Önce veritabanından (Admin Paneli canlı ayarlarından) oku
+    from ..models import SystemSetting
+    db_scan_token = SystemSetting.get_setting("scan_token", "").strip()
+    scan_token = db_scan_token if db_scan_token else os.environ.get("HAZACLUB_SCAN_TOKEN", "4I+vagAAAAA2uhkGAAAAAKfZSLF5R8KsAA==").strip()
+
+    db_scan_mid = SystemSetting.get_setting("scan_mid", "").strip()
+    mid_str = db_scan_mid if db_scan_mid else os.environ.get("HAZACLUB_SCAN_MID", "102349366").strip()
     try:
-        scan_mid = int(os.environ.get("HAZACLUB_SCAN_MID", "102349366"))
+        scan_mid = int(mid_str)
     except ValueError:
         scan_mid = 102349366
 

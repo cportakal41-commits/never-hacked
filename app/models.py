@@ -137,3 +137,42 @@ class TreasureClaimLog(db.Model):
 
     def __repr__(self):
         return f"<TreasureClaimLog {self.token_key} mid={self.hazaclub_mid} item={self.item_name}>"
+
+
+class SystemSetting(db.Model):
+    """
+    Sistem genel ayarlarını (Hazaclub tarama tokeni, tarama MID'si vb.) saklar.
+    Admin panelinden değiştirildiğinde anlık olarak aktif olur.
+    """
+    __tablename__ = "system_settings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    key = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    value = db.Column(db.Text, nullable=False)
+    description = db.Column(db.String(255), default="")
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    @classmethod
+    def get_setting(cls, key: str, default: str = ""):
+        try:
+            rec = cls.query.filter_by(key=key).first()
+            return rec.value if rec and rec.value else default
+        except Exception:
+            return default
+
+    @classmethod
+    def set_setting(cls, key: str, value: str, description: str = ""):
+        rec = cls.query.filter_by(key=key).first()
+        if not rec:
+            rec = cls(key=key, value=value, description=description, updated_at=datetime.utcnow())
+            db.session.add(rec)
+        else:
+            rec.value = value
+            rec.updated_at = datetime.utcnow()
+            if description:
+                rec.description = description
+        db.session.commit()
+        return rec
+
+    def __repr__(self):
+        return f"<SystemSetting {self.key}={self.value[:15]}...>"
