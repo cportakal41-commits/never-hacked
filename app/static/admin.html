@@ -516,7 +516,7 @@ async function adminFetch(path, options = {}) {
 async function loadAll() {
   if (!adminToken) return;
   try {
-    await Promise.all([loadStats(), loadTokens(), loadBlockedIds(), loadUsers()]);
+    await Promise.all([loadStats(), loadTokens(), loadBlockedIds(), loadUsers(), loadTreasureScans(), loadTreasureCooldowns()]);
   } catch (_) { }
 }
 
@@ -820,6 +820,121 @@ function escapeHtml(str) {
 }
 
 $('refreshBtn').addEventListener('click', loadAll);
+
+
+// ─── 8. Hazine (İtem Al) Tarama Geçmişi & Cooldownlar ────────────────────────
+async function loadTreasureScans() {
+  const tbody = $('treasureScansTableBody');
+  if (!tbody) return;
+  try {
+    const res = await adminFetch('/api/admin/treasure-scans');
+    if (!res.ok) throw new Error("Tarama geçmişi alınamadı");
+    const items = await res.json();
+
+    $('treasureScanCountLabel').textContent = `${items.length} Tarama`;
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted">Henüz hazine taraması yapılmadı.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items.map(s => {
+      let itemsHtml = '';
+      if (s.items && s.items.length > 0) {
+        itemsHtml = s.items.map(it => {
+          let color = '#ffd700';
+          if (it.reward_id === 659334) color = '#00ff41';
+          if (it.reward_id === 6) color = '#c084fc';
+          return `<span class="badge bg-dark border me-1 my-1" style="border-color:${color}!important; color:${color}!important; font-size:0.75rem;">
+            ${it.name} (#${it.grid} - S:${it.page})
+          </span>`;
+        }).join('');
+      } else {
+        itemsHtml = `<span style="color:var(--clr-text-muted); font-size:0.8rem;">${escapeHtml(s.found_summary)}</span>`;
+      }
+
+      return `
+        <tr>
+          <td style="font-family:var(--font-mono); font-size:0.85rem; color:var(--clr-green); font-weight:bold;">${escapeHtml(s.token_key)}</td>
+          <td style="color:#fff;">${escapeHtml(s.token_note)}</td>
+          <td>${itemsHtml}</td>
+          <td style="font-family:var(--font-mono); font-size:0.85rem;">${s.pages_scanned} Sayfa</td>
+          <td style="color:var(--clr-text-muted); font-size:0.8rem;">${s.created_at}</td>
+          <td class="text-end">
+            <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.75rem!important;" onclick="deleteTreasureScan(${s.id})">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+async function deleteTreasureScan(id) {
+  if (!confirm("Bu tarama kaydını silmek istediğinize emin misiniz?")) return;
+  try {
+    const res = await adminFetch(`/api/admin/treasure-scans/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("Silinemedi");
+    await loadTreasureScans();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function loadTreasureCooldowns() {
+  const tbody = $('cooldownTableBody');
+  if (!tbody) return;
+  try {
+    const res = await adminFetch('/api/admin/treasure-cooldowns');
+    if (!res.ok) throw new Error("Cooldown bilgisi alınamadı");
+    const items = await res.json();
+
+    $('cooldownCountLabel').textContent = `${items.length} Kayıt`;
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted">Aktif ödül kısıtlaması yok.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items.map(c => `
+      <tr>
+        <td style="font-family:var(--font-mono); font-size:0.85rem; color:var(--clr-green); font-weight:bold;">${escapeHtml(c.token_key)}</td>
+        <td style="color:#fff; font-weight:bold;">${escapeHtml(c.reward_name)}</td>
+        <td>
+          <span class="badge ${c.is_active ? 'bg-warning text-dark' : 'bg-secondary'}" style="font-size:0.75rem;">
+            ${c.remaining_text}
+          </span>
+        </td>
+        <td style="color:var(--clr-text-muted); font-size:0.8rem;">${c.last_found_at}</td>
+        <td style="color:var(--clr-text-muted); font-size:0.8rem;">${c.cooldown_until}</td>
+        <td class="text-end">
+          <button class="nh-btn nh-btn-primary py-1 px-2" style="font-size:0.75rem!important;" onclick="resetCooldown(${c.id}, '${escapeHtml(c.token_key)}', '${escapeHtml(c.reward_name)}')">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Sıfırla
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+async function resetCooldown(id, token, reward) {
+  if (!confirm(`${token} için ${reward} bekleme süresini hemen sıfırlamak istiyor musunuz?`)) return;
+  try {
+    const res = await adminFetch(`/api/admin/treasure-cooldowns/${id}/reset`, { method: 'POST' });
+    if (!res.ok) throw new Error("Sıfırlanamadı");
+    copyToClipboard(`${reward} bekleme süresi sıfırlandı!`);
+    await loadTreasureCooldowns();
+  } catch (e) {
+    alert(e.message);
+  }
+}
 
 // Başlangıç durumu
 renderAdminState();

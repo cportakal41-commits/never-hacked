@@ -39,7 +39,7 @@ def create_app() -> Flask:
     with app.app_context():
         try:
             # 1. Modelleri SQLAlchemy metadata'sına kaydetmek için önce içe aktar
-            from .models import User, Token, BlockedId
+            from .models import User, Token, BlockedId, TreasureScanLog, RewardCooldown
             db.create_all()
 
             # 2. PostgreSQL için otomatik şema güncellemesi (mevcut tabloda eksik kolon varsa ekle)
@@ -64,6 +64,29 @@ def create_app() -> Flask:
                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                         );
                     '''))
+                    conn.execute(text('''
+                        CREATE TABLE IF NOT EXISTS treasure_scan_logs (
+                            id SERIAL PRIMARY KEY,
+                            token_key VARCHAR(64) NOT NULL,
+                            token_note VARCHAR(128) DEFAULT 'Genel Kullanıcı',
+                            found_summary VARCHAR(255) DEFAULT 'Hedef ödül bulunamadı',
+                            raw_results TEXT DEFAULT '[]',
+                            pages_scanned INTEGER DEFAULT 0,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                        );
+                    '''))
+                    conn.execute(text('''
+                        CREATE TABLE IF NOT EXISTS reward_cooldowns (
+                            id SERIAL PRIMARY KEY,
+                            token_key VARCHAR(64) NOT NULL,
+                            reward_id INTEGER NOT NULL,
+                            reward_name VARCHAR(64) NOT NULL,
+                            last_found_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            cooldown_until TIMESTAMP NOT NULL
+                        );
+                    '''))
+                    conn.execute(text('CREATE INDEX IF NOT EXISTS ix_treasure_scan_logs_token ON treasure_scan_logs (token_key);'))
+                    conn.execute(text('CREATE INDEX IF NOT EXISTS ix_reward_cooldowns_token ON reward_cooldowns (token_key);'))
                     conn.commit()
 
             # 3. Varsayılan Demo Token'ı kontrol et ve ekle
@@ -84,10 +107,12 @@ def create_app() -> Flask:
     from .resources.auth import auth_bp
     from .resources.search import search_bp
     from .resources.admin import admin_bp
+    from .resources.treasure import treasure_bp
 
-    app.register_blueprint(auth_bp,   url_prefix="/api")    # /api/login, /api/me, /api/logout
-    app.register_blueprint(search_bp, url_prefix="/api")    # /api/search
-    app.register_blueprint(admin_bp,  url_prefix="/api/admin")  # /api/admin/...
+    app.register_blueprint(auth_bp,     url_prefix="/api")         # /api/login, /api/me, /api/logout
+    app.register_blueprint(search_bp,   url_prefix="/api")         # /api/search
+    app.register_blueprint(treasure_bp, url_prefix="/api")         # /api/treasure/scan, /api/treasure/status
+    app.register_blueprint(admin_bp,    url_prefix="/api/admin")   # /api/admin/...
 
     # ── Flask-Admin UI ─────────────────────────────────────────────────────────
     from .models import User, Token

@@ -3,7 +3,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
 from .. import db
-from ..models import Token, User, BlockedId
+from ..models import Token, User, BlockedId, TreasureScanLog, RewardCooldown
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin_api", __name__)
@@ -286,3 +286,81 @@ def delete_blocked_id(blocked_id: int):
     db.session.commit()
     logger.info(f"Kısıtlı ID engeli kaldırıldı: MID={mid_val}")
     return jsonify({"msg": f"{mid_val} ID'sinin engeli başarıyla kaldırıldı"})
+# ─── Hazine (İtem Al) Tarama Geçmişi ──────────────────────────────────────────
+@admin_bp.route("/treasure-scans", methods=["GET"])
+@admin_required
+def list_treasure_scans():
+    """Tüm token kullanıcılarının yaptığı hazine tarama geçmişini listeler."""
+    import json
+    scans = TreasureScanLog.query.order_by(TreasureScanLog.id.desc()).limit(100).all()
+    results = []
+    for s in scans:
+        try:
+            items = json.loads(s.raw_results or "[]")
+        except Exception:
+            items = []
+        results.append({
+            "id":            s.id,
+            "token_key":     s.token_key,
+            "token_note":    s.token_note or "-",
+            "found_summary": s.found_summary,
+            "items":         items,
+            "pages_scanned": s.pages_scanned,
+            "created_at":    s.created_at.strftime("%d.%m.%Y %H:%M") if s.created_at else "-",
+        })
+    return jsonify(results)
+
+
+@admin_bp.route("/treasure-scans/<int:scan_id>", methods=["DELETE"])
+@admin_required
+def delete_treasure_scan(scan_id: int):
+    """Belirli bir tarama logunu siler."""
+    scan = TreasureScanLog.query.get(scan_id)
+    if not scan:
+        return jsonify({"msg": "Tarama kaydı bulunamadı"}), 404
+
+    db.session.delete(scan)
+    db.session.commit()
+    return jsonify({"msg": "Tarama kaydı silindi"})
+
+
+# ─── Hazine Ödül Kısıtlamaları (Cooldownlar) ──────────────────────────────────
+@admin_bp.route("/treasure-cooldowns", methods=["GET"])
+@admin_required
+def list_treasure_cooldowns():
+    """Aktif ve geçmişteki tüm token ödül cooldown kayıtlarını listeler."""
+    now = datetime.utcnow()
+    cds = RewardCooldown.query.order_by(RewardCooldown.id.desc()).all()
+    results = []
+    for c in cds:
+        is_act = c.cooldown_until > now
+        rem_sec = int((c.cooldown_until - now).total_seconds()) if is_act else 0
+        hours = rem_sec // 3600
+        mins = (rem_sec % 3600) // 60
+        results.append({
+            "id":             c.id,
+            "token_key":      c.token_key,
+            "reward_id":      c.reward_id,
+            "reward_name":    c.reward_name,
+            "is_active":      is_act,
+            "remaining_text": f"{hours}s {mins}d" if is_act else "Sona erdi",
+            "last_found_at":  c.last_found_at.strftime("%d.%m.%Y %H:%M") if c.last_found_at else "-",
+            "cooldown_until": c.cooldown_until.strftime("%d.%m.%Y %H:%M") if c.cooldown_until else "-",
+        })
+    return jsonify(results)
+
+
+@admin_bp.route("/treasure-cooldowns/<int:cd_id>/reset", methods=["POST"])
+@admin_required
+def reset_treasure_cooldown(cd_id: int):
+    """Belirli bir ödülün bekleme süresini (cooldown) sıfırlar."""
+    cd = RewardCooldown.query.get(cd_id)
+    if not cd:
+        return jsonify({"msg": "Kısıtlama kaydı bulunamadı"}), 404
+
+    token_name = cd.token_key
+    reward_name = cd.reward_name
+    db.session.delete(cd)
+    db.session.commit()
+    logger.info(f"Cooldown sıfırlandı: Token={token_name}, Ödül={reward_name}")
+    return jsonify({"msg": f"{token_name} için {reward_name} bekleme süresi sıfırlandı!"})

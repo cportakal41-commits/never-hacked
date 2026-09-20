@@ -62,6 +62,68 @@
       color: #fff;
       text-shadow: 0 0 10px var(--clr-green);
     }
+  
+    /* ─── Hazine & Sekme Stilleri ─── */
+    .nh-nav-tab {
+      background: rgba(0, 255, 65, 0.05);
+      border: 1px solid rgba(0, 255, 65, 0.2);
+      color: var(--clr-green-dim);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.05em;
+    }
+    .nh-nav-tab:hover {
+      background: rgba(0, 255, 65, 0.15);
+      color: var(--clr-green);
+      border-color: var(--clr-green);
+    }
+    .nh-nav-tab.active {
+      background: rgba(0, 255, 65, 0.25);
+      color: #00ff41;
+      border-color: #00ff41;
+      box-shadow: 0 0 12px rgba(0, 255, 65, 0.35);
+    }
+    .cooldown-badge {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 6px 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .cd-ready {
+      background: rgba(0, 255, 65, 0.1);
+      border-color: rgba(0, 255, 65, 0.4);
+      color: #00ff41;
+    }
+    .cd-waiting {
+      background: rgba(255, 170, 0, 0.1);
+      border-color: rgba(255, 170, 0, 0.4);
+      color: #ffaa00;
+    }
+    .treasure-card {
+      background: rgba(5, 20, 10, 0.85);
+      border-radius: 8px;
+      padding: 12px 16px;
+      border: 1px solid var(--clr-border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .treasure-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 255, 65, 0.2);
+    }
+    .prince-border { border-color: #ffd700!important; box-shadow: 0 0 10px rgba(255, 215, 0, 0.25); }
+    .hunter-border { border-color: #00ff41!important; box-shadow: 0 0 10px rgba(0, 255, 65, 0.25); }
+    .frame-border  { border-color: #c084fc!important; box-shadow: 0 0 10px rgba(192, 132, 252, 0.25); }
+
   </style>
 </head>
 
@@ -133,6 +195,22 @@
   <!-- Tamamen Mobil Uyumlu (Responsive)                                      -->
   <!-- ══════════════════════════════════════════════════════════════════════ -->
   <div id="sectionSearch" class="d-none mt-2">
+
+    <!-- ── Sekme Gezinme Çubuğu ── -->
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <button id="tabSearchBtn" class="nh-nav-tab active">
+        <i class="bi bi-search me-1"></i>ID SORGULA
+      </button>
+      <button id="tabTreasureBtn" class="nh-nav-tab">
+        <i class="bi bi-gift-fill me-1"></i>İTEM AL (HAZİNE)
+      </button>
+      <button id="logoutBtn" class="nh-nav-tab ms-auto" style="border-color:rgba(255,60,60,0.4); color:#ff4d4d;">
+        <i class="bi bi-box-arrow-right me-1"></i>Çıkış
+      </button>
+    </div>
+
+    <!-- ── Panel 1: Hedef ID Sorgula ── -->
+    <div id="panelSearch" class="nh-card p-3 p-sm-4">
     <div class="nh-card p-3 p-sm-4">
       
       <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom" style="border-color: rgba(0,255,65,0.1)!important;">
@@ -217,8 +295,92 @@
           </div>
         </div>
       </div><!-- /result -->
+    </div><!-- /panelSearch -->
+
+    <!-- ── Panel 2: İtem Al (Hazine Izgara Tarayıcı) ── -->
+    <div id="panelTreasure" class="nh-card p-3 p-sm-4 d-none">
+      
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: rgba(0,255,65,0.1)!important;">
+        <div>
+          <span style="font-family:var(--font-mono); font-size:0.88rem; color:var(--clr-green); letter-spacing:0.1em; text-transform:uppercase; font-weight:bold;">
+            <i class="bi bi-radar me-1"></i>HAZİNE TARAYICI (İTEM AL)
+          </span>
+          <div style="font-size:0.75rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:3px;">
+            50 Sayfa taranır • Sadece PRİNCE, HAZA HUNTER ve EFSANE ÇERÇEVE tespit edilir
+          </div>
+        </div>
+        <button id="refreshCooldownsBtn" class="nh-btn py-1 px-2" style="font-size:0.75rem!important;" title="Durumu Yenile">
+          <i class="bi bi-arrow-clockwise"></i>
+        </button>
+      </div>
+
+      <!-- Bekleme Süreleri (Cooldown) Göstergeleri -->
+      <div class="mb-3">
+        <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-green-dim); margin-bottom:6px; letter-spacing:0.05em;">
+          <i class="bi bi-hourglass-split me-1"></i>ÖDÜL BEKLEME SÜRELERİ (COOLDOWN)
+        </div>
+        <div class="row g-2" id="cooldownCardsRow">
+          <!-- JS ile doldurulacak -->
+          <div class="col-12 col-md-4">
+            <div class="cooldown-badge cd-ready" id="cdBadge2373">
+              <span>👑 <strong>PRİNCE</strong> (3 Gün)</span>
+              <span id="cdText2373" class="badge bg-success">Hazır</span>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="cooldown-badge cd-ready" id="cdBadge659334">
+              <span>🏹 <strong>HAZA HUNTER</strong> (1 Gün)</span>
+              <span id="cdText659334" class="badge bg-success">Hazır</span>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="cooldown-badge cd-ready" id="cdBadge6">
+              <span>🖼️ <strong>EFSANE ÇERÇEVE</strong> (1 Gün)</span>
+              <span id="cdText6" class="badge bg-success">Hazır</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarama Başlat Butonu -->
+      <button id="startScanBtn" class="nh-btn w-100 py-3 mb-3" style="font-size:1.05rem!important; font-weight:900; letter-spacing:0.1em;">
+        <i class="bi bi-radar me-2"></i>TARAMAYI BAŞLAT (50 SAYFA)
+      </button>
+
+      <!-- Tarama Yükleniyor Göstergesi -->
+      <div id="scanLoadingBox" class="d-none text-center py-4 my-2" style="background:rgba(0,255,65,0.03); border:1px dashed rgba(0,255,65,0.3); border-radius:8px;">
+        <div class="spinner-border text-success mb-2" role="status" style="width: 2.2rem; height: 2.2rem;">
+          <span class="visually-hidden">Yükleniyor...</span>
+        </div>
+        <div style="font-family:var(--font-mono); color:#00ff41; font-weight:bold; font-size:0.95rem;">
+          HAZİNE HARİTASI TARANIYOR...
+        </div>
+        <div style="font-size:0.8rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:4px;">
+          50 sayfa taranıyor, hedef ödüller aranıyor... Lütfen bekleyin.
+        </div>
+      </div>
+
+      <!-- Tarama Hata / Bilgi Kutusu -->
+      <div id="scanErrorMsg" class="nh-error d-none my-2"></div>
+
+      <!-- Sonuç Listesi -->
+      <div id="scanResultsContainer" class="d-none mt-3">
+        <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom" style="border-color: rgba(0,255,65,0.1)!important;">
+          <span style="font-family:var(--font-mono); font-size:0.82rem; color:var(--clr-green); font-weight:bold;">
+            <i class="bi bi-check-circle-fill me-1"></i>TARAMA SONUÇLARI
+          </span>
+          <span id="scanSummaryBadge" class="badge bg-dark border border-success font-monospace text-success">
+            —
+          </span>
+        </div>
+
+        <div id="foundItemsList" class="row g-2">
+          <!-- JS ile doldurulacak -->
+        </div>
+      </div>
 
     </div>
+
   </div>
 
 </div><!-- /container -->
@@ -398,6 +560,149 @@ async function doSearch() {
     btn.innerHTML = '<i class="bi bi-search me-1"></i>Sorgula';
   }
 }
+
+
+// ─── SEKME YÖNETİMİ (ID Sorgula <-> İtem Al) ───────────────────────────────
+const tabSearchBtn = $('tabSearchBtn');
+const tabTreasureBtn = $('tabTreasureBtn');
+const panelSearch = $('panelSearch');
+const panelTreasure = $('panelTreasure');
+const logoutBtn = $('logoutBtn');
+
+if (tabSearchBtn && tabTreasureBtn) {
+  tabSearchBtn.addEventListener('click', () => {
+    tabSearchBtn.classList.add('active');
+    tabTreasureBtn.classList.remove('active');
+    show(panelSearch);
+    hide(panelTreasure);
+  });
+
+  tabTreasureBtn.addEventListener('click', () => {
+    tabTreasureBtn.classList.add('active');
+    tabSearchBtn.classList.remove('active');
+    hide(panelSearch);
+    show(panelTreasure);
+    loadTreasureStatus();
+  });
+}
+
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    accessToken = null;
+    localStorage.removeItem('nh_access_token');
+    renderState();
+  });
+}
+
+// ─── HAZİNE / İTEM AL MANTIĞI ──────────────────────────────────────────────
+async function loadTreasureStatus() {
+  try {
+    const data = await api('/api/treasure/status');
+    if (data && data.cooldowns) {
+      renderCooldowns(data.cooldowns);
+    }
+  } catch (e) {
+    console.warn("Cooldown status yüklenemedi:", e);
+  }
+}
+
+function renderCooldowns(cooldowns) {
+  cooldowns.forEach(cd => {
+    const badge = $(`cdBadge${cd.reward_id}`);
+    const text = $(`cdText${cd.reward_id}`);
+    if (!badge || !text) return;
+
+    if (cd.is_ready) {
+      badge.className = 'cooldown-badge cd-ready';
+      text.className = 'badge bg-success';
+      text.textContent = 'Hazır';
+    } else {
+      badge.className = 'cooldown-badge cd-waiting';
+      text.className = 'badge bg-warning text-dark';
+      text.textContent = `Bekleme: ${cd.remaining_text}`;
+      badge.title = `Sonraki hak: ${cd.next_available_at}`;
+    }
+  });
+}
+
+$('refreshCooldownsBtn')?.addEventListener('click', loadTreasureStatus);
+
+// Tarama Başlat Butonu
+const startScanBtn = $('startScanBtn');
+const scanLoadingBox = $('scanLoadingBox');
+const scanErrorMsg = $('scanErrorMsg');
+const scanResultsContainer = $('scanResultsContainer');
+const foundItemsList = $('foundItemsList');
+const scanSummaryBadge = $('scanSummaryBadge');
+
+startScanBtn?.addEventListener('click', async () => {
+  startScanBtn.disabled = true;
+  hide(scanErrorMsg);
+  hide(scanResultsContainer);
+  show(scanLoadingBox);
+
+  try {
+    const data = await api('/api/treasure/scan', { method: 'POST' });
+
+    hide(scanLoadingBox);
+    show(scanResultsContainer);
+
+    if (data.cooldowns) {
+      renderCooldowns(data.cooldowns);
+    }
+
+    scanSummaryBadge.textContent = `${data.pages_scanned || 0} Sayfa Taranıldı • ${data.summary}`;
+
+    foundItemsList.innerHTML = '';
+
+    if (!data.found_items || data.found_items.length === 0) {
+      let msg = '<div class="col-12"><div class="p-3 text-center" style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.15); border-radius:8px; font-family:var(--font-mono); color:var(--clr-text-muted);">';
+      if (data.cooldown_suppressed_count > 0) {
+        msg += `<i class="bi bi-hourglass-split me-1 text-warning"></i>Haritada hedef ödül var ancak <strong>bekleme süreniz (cooldown)</strong> dolmadığı için kısıtlandı.`;
+      } else {
+        msg += `<i class="bi bi-x-circle me-1 text-danger"></i>50 sayfada PRİNCE, HAZA HUNTER veya EFSANE ÇERÇEVE ödülü bulunamadı.`;
+      }
+      msg += '</div></div>';
+      foundItemsList.innerHTML = msg;
+    } else {
+      data.found_items.forEach(item => {
+        let borderClass = 'prince-border';
+        let colorStyle = 'color:#ffd700;';
+        if (item.reward_id === 659334) { borderClass = 'hunter-border'; colorStyle = 'color:#00ff41;'; }
+        else if (item.reward_id === 6) { borderClass = 'frame-border'; colorStyle = 'color:#c084fc;'; }
+
+        const card = document.createElement('div');
+        card.className = 'col-12 col-md-6';
+        card.innerHTML = `
+          <div class="treasure-card ${borderClass} d-flex align-items-center justify-content-between">
+            <div>
+              <div style="${colorStyle} font-weight:900; font-family:var(--font-mono); font-size:1.05rem; letter-spacing:0.05em;">
+                ${item.icon || '🔥'} ${item.name}
+              </div>
+              <div style="font-size:0.75rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:2px;">
+                Reward ID: <code>${item.reward_id}</code> • Sayfa: <strong style="color:#fff;">${item.page}</strong>
+              </div>
+            </div>
+            <div class="text-end">
+              <div style="font-size:0.7rem; color:var(--clr-green-dim); font-family:var(--font-mono);">KUTU / GRID ID</div>
+              <div style="font-size:1.2rem; font-weight:bold; font-family:var(--font-mono); color:#fff; text-shadow:0 0 8px rgba(0,255,65,0.5);">
+                #${item.grid}
+              </div>
+            </div>
+          </div>
+        `;
+        foundItemsList.appendChild(card);
+      });
+    }
+
+  } catch (err) {
+    hide(scanLoadingBox);
+    show(scanErrorMsg);
+    scanErrorMsg.textContent = 'Tarama Hatası: ' + err.message;
+  } finally {
+    startScanBtn.disabled = false;
+  }
+});
 
 // Başlangıç durumu
 renderState();

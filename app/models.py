@@ -1,6 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from . import db
 from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
+import secrets
 
 
 class User(db.Model):
@@ -18,15 +20,11 @@ class User(db.Model):
     login_time = db.Column(db.DateTime)                             # Son giriş zamanı
     created_at = db.Column(db.DateTime, default=datetime.utcnow)    # Kayıt oluşturma tarihi
 
-    # İlişki: bu kullanıcıya ait JWT token'ları
     tokens = db.relationship("Token", backref="user", lazy=True)
 
     def __repr__(self):
         return f"<User {self.nick} (MID={self.mid})>"
 
-
-import uuid
-import secrets
 
 class Token(db.Model):
     """
@@ -48,7 +46,6 @@ class Token(db.Model):
 
     @staticmethod
     def generate_key():
-        """Rastgele güvenli formatta erişim anahtarı üretir. Örn: NH-A1B2-C3D4-E5F6"""
         part1 = secrets.token_hex(2).upper()
         part2 = secrets.token_hex(2).upper()
         part3 = secrets.token_hex(2).upper()
@@ -73,3 +70,43 @@ class BlockedId(db.Model):
 
     def __repr__(self):
         return f"<BlockedId MID={self.mid}>"
+
+
+class TreasureScanLog(db.Model):
+    """
+    Token kullanıcılarının yaptığı hazine (İtem Al) tarama geçmişini saklar.
+    """
+    __tablename__ = "treasure_scan_logs"
+
+    id = db.Column(db.Integer, primary_key=True)
+    token_key = db.Column(db.String(64), nullable=False, index=True)
+    token_note = db.Column(db.String(128), default="Genel Kullanıcı")
+    found_summary = db.Column(db.String(255), default="Hedef ödül bulunamadı")
+    raw_results = db.Column(db.Text, default="[]")  # JSON formatında bulunan kutular
+    pages_scanned = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<TreasureScanLog token={self.token_key} found={self.found_summary}>"
+
+
+class RewardCooldown(db.Model):
+    """
+    Token bazlı ödül bekleme süreleri (cooldown).
+    Örn: PRİNCE için 3 gün, HAZA HUNTER ve EFSANE ÇERÇEVE için 1 gün.
+    """
+    __tablename__ = "reward_cooldowns"
+
+    id = db.Column(db.Integer, primary_key=True)
+    token_key = db.Column(db.String(64), nullable=False, index=True)
+    reward_id = db.Column(db.Integer, nullable=False)
+    reward_name = db.Column(db.String(64), nullable=False)
+    last_found_at = db.Column(db.DateTime, default=datetime.utcnow)
+    cooldown_until = db.Column(db.DateTime, nullable=False)
+
+    @property
+    def is_active(self):
+        return datetime.utcnow() < self.cooldown_until
+
+    def __repr__(self):
+        return f"<RewardCooldown {self.token_key} {self.reward_name} until {self.cooldown_until}>"
