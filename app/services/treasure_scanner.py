@@ -234,3 +234,86 @@ def scan_treasure_grid(token_key: str, token_note: str = "Genel Kullanıcı"):
         "summary": summary,
         "cooldowns": updated_cooldowns
     }
+
+
+HAZACLUB_LIGHTUP_URL = "https://api.hazaclub.com/treasure/light_up"
+
+def send_light_up(grid_id: int, page_no: int, h_token: str, h_mid: int, app_token_key: str = None):
+    """
+    Hazaclub /treasure/light_up endpoint'ine ödül alma / ışık yakma isteği gönderir.
+    """
+    headers = {
+        "Accept": "application/json, text/plain, */*",
+        "Content-Type": "application/json",
+        "Origin": "https://vueh5.hazaclub.com",
+        "Referer": "https://vueh5.hazaclub.com/",
+        "sec-ch-ua": '"Chromium";v="124", "Android WebView";v="124", "Not-A.Brand";v="99"',
+        "sec-ch-ua-mobile": "?1",
+        "sec-ch-ua-platform": '"Android"',
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+        "User-Agent": "Mozilla/5.0 (Linux; Android 9; SM-G970N Build/PQ3A.190605.06171433; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/124.0.6367.82 Mobile Safari/537.36",
+        "X-Requested-With": "com.tinytaala.chat"
+    }
+
+    payload = {
+        "grid_id": int(grid_id),
+        "page_no": int(page_no),
+        "h_token": str(h_token).strip(),
+        "h_mid": int(h_mid),
+        "paddingTop": 24,
+        "paddingBottom": 0,
+        "h_app": 0,
+        "h_av": "4.7.0",
+        "h_dt": 1,
+        "h_is_debug": 0,
+        "h_lang": "tr",
+        "h_os": "28",
+        "h_did": "dcde917b8cddc8b6",
+        "h_adid": "2bb2d3cc-626e-42da-a46f-3a4a6fad12c8",
+        "h_ch": "GooglePlay",
+        "h_nt": 4,
+        "h_vpn": 1,
+        "h_ts": int(time.time() * 1000),
+        "h_brand": "samsung",
+        "h_model": "SM-G970N",
+        "h_lbs_off": True,
+        "h_sim": "TR",
+        "h_h5plat": 1
+    }
+
+    try:
+        res = requests.post(HAZACLUB_LIGHTUP_URL, json=payload, headers=headers, timeout=15)
+        if res.status_code != 200:
+            return {
+                "status": "error",
+                "ret": res.status_code,
+                "msg": f"Hazaclub API HTTP {res.status_code} hatası verdi."
+            }
+
+        data = res.json()
+        ret = data.get("ret")
+        if ret == 1:
+            show_rewards = data.get("data", {}).get("show_rewards", [])
+            return {
+                "status": "success",
+                "ret": 1,
+                "data": data.get("data", {}),
+                "show_rewards": show_rewards,
+                "msg": "Işık başarıyla yakıldı! Ödül hesabınıza gönderildi."
+            }
+        else:
+            return {
+                "status": "error",
+                "ret": ret,
+                "msg": data.get("msg") or "İşlem başarısız (Kutu daha önce açılmış veya token geçersiz olabilir).",
+                "raw": data
+            }
+    except Exception as e:
+        logger.error(f"Light-up isteğinde hata: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "ret": -1,
+            "msg": f"Bağlantı hatası: {str(e)}"
+        }

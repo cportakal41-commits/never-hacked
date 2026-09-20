@@ -2,6 +2,9 @@
 <html lang="tr" data-bs-theme="dark">
 <head>
   <meta charset="utf-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Never Hacked – Kullanıcı İstihbarat Sistemi</title>
   <meta name="description" content="Hazaclub kullanıcı sorgulama sistemi.">
@@ -313,28 +316,27 @@
         </button>
       </div>
 
-      <!-- Bekleme Süreleri (Cooldown) Göstergeleri -->
+      <!-- Hedef Ödüller (Alt Alta, Süre Gün Yazmaz) -->
       <div class="mb-3">
         <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-green-dim); margin-bottom:6px; letter-spacing:0.05em;">
-          <i class="bi bi-hourglass-split me-1"></i>ÖDÜL BEKLEME SÜRELERİ (COOLDOWN)
+          <i class="bi bi-shield-check me-1"></i>HEDEF ÖDÜLLER
         </div>
         <div class="row g-2" id="cooldownCardsRow">
-          <!-- JS ile doldurulacak -->
-          <div class="col-12 col-md-4">
-            <div class="cooldown-badge cd-ready" id="cdBadge2373">
-              <span>👑 <strong>PRİNCE</strong> (3 Gün)</span>
+          <div class="col-12">
+            <div class="cooldown-badge cd-ready d-flex justify-content-between align-items-center" id="cdBadge2373">
+              <span>👑 <strong>PRİNCE</strong></span>
               <span id="cdText2373" class="badge bg-success">Hazır</span>
             </div>
           </div>
-          <div class="col-12 col-md-4">
-            <div class="cooldown-badge cd-ready" id="cdBadge659334">
-              <span>🏹 <strong>HAZA HUNTER</strong> (1 Gün)</span>
+          <div class="col-12">
+            <div class="cooldown-badge cd-ready d-flex justify-content-between align-items-center" id="cdBadge659334">
+              <span>🏹 <strong>HAZA HUNTER</strong></span>
               <span id="cdText659334" class="badge bg-success">Hazır</span>
             </div>
           </div>
-          <div class="col-12 col-md-4">
-            <div class="cooldown-badge cd-ready" id="cdBadge6">
-              <span>🖼️ <strong>EFSANE ÇERÇEVE</strong> (1 Gün)</span>
+          <div class="col-12">
+            <div class="cooldown-badge cd-ready d-flex justify-content-between align-items-center" id="cdBadge6">
+              <span>🖼️ <strong>EFSANE ÇERÇEVE</strong></span>
               <span id="cdText6" class="badge bg-success">Hazır</span>
             </div>
           </div>
@@ -376,6 +378,85 @@
         <div id="foundItemsList" class="row g-2">
           <!-- JS ile doldurulacak -->
         </div>
+
+        <!-- Ödül Gönderme / Işık Yakma Bölümü -->
+        <div id="claimSection" class="mt-4 p-3 p-sm-4 d-none" style="background:rgba(0, 255, 65, 0.04); border:1px solid var(--clr-green); border-radius:8px; box-shadow:0 0 15px rgba(0,255,65,0.15);">
+          
+          <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom" style="border-color: rgba(0,255,65,0.2)!important;">
+            <div>
+              <span style="font-family:var(--font-mono); font-size:0.9rem; color:var(--clr-green); font-weight:bold; letter-spacing:0.05em;">
+                <i class="bi bi-send-check-fill me-1"></i>İTEM GÖNDER / IŞIK YAK
+              </span>
+              <div style="font-size:0.72rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:2px;">
+                Bulunan hedef ödülü Hazaclub hesabınıza gönderin
+              </div>
+            </div>
+            <span class="badge bg-success font-monospace" id="claimSelectedBadge">Kutu Seçildi</span>
+          </div>
+
+          <!-- Hedef Ödül Seçimi -->
+          <div class="mb-3">
+            <label for="claimItemSelect" class="form-label" style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-green-dim); text-transform:uppercase;">
+              Gönderilecek Ödülü Seçin:
+            </label>
+            <select id="claimItemSelect" class="form-select nh-input" style="font-family:var(--font-mono); font-size:0.85rem;">
+            </select>
+          </div>
+
+          <!-- TOKEN VE ID GİRİNİZ -->
+          <div class="mb-3">
+            <div style="font-family:var(--font-mono); font-size:0.82rem; color:var(--clr-green); font-weight:bold; letter-spacing:0.05em; margin-bottom:4px;">
+              <i class="bi bi-key-fill me-1"></i>TOKEN VE ID GİRİNİZ
+            </div>
+            <div style="font-size:0.72rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-bottom:8px;">
+              * Tarama için kullanılan token kullanılmaz. Ödülü göndermek istediğiniz Hazaclub hesabının ID ve Token bilgisini giriniz.
+            </div>
+
+            <div class="row g-2">
+              <div class="col-12 col-sm-6">
+                <label for="claimMidInput" class="form-label" style="font-family:var(--font-mono); font-size:0.72rem; color:var(--clr-text-muted);">
+                  Hazaclub ID (h_mid)
+                </label>
+                <input
+                  type="number"
+                  id="claimMidInput"
+                  class="form-control nh-input"
+                  placeholder="Örn: 102349366"
+                  autocomplete="off"
+                >
+              </div>
+              <div class="col-12 col-sm-6">
+                <label for="claimTokenInput" class="form-label" style="font-family:var(--font-mono); font-size:0.72rem; color:var(--clr-text-muted);">
+                  Hazaclub Token (h_token)
+                </label>
+                <input
+                  type="text"
+                  id="claimTokenInput"
+                  class="form-control nh-input"
+                  placeholder="Örn: 4I+vagAAAAA2uhkGAAAAAKfZSLF5R8KsAA=="
+                  autocomplete="off"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Gönder Butonu -->
+          <button id="sendLightUpBtn" class="nh-btn w-100 py-2 mt-1" style="font-size:0.95rem!important; font-weight:bold; letter-spacing:0.05em;">
+            <i class="bi bi-lightning-charge-fill me-1"></i>ÖDÜLÜ GÖNDER / IŞIK YAK
+          </button>
+
+          <!-- Durum / Hata / Başarı Alanları -->
+          <div id="claimLoading" class="d-none text-center py-3 my-2" style="font-family:var(--font-mono); color:#00ff41; font-size:0.85rem;">
+            <div class="spinner-border text-success spinner-border-sm me-2" role="status"></div>
+            Hazaclub API'ye Gönderiliyor (Işık Yakılıyor)...
+          </div>
+
+          <div id="claimErrorBox" class="nh-error d-none my-2"></div>
+          <div id="claimSuccessBox" class="d-none mt-3 p-3 text-start" style="background:rgba(0,255,65,0.08); border:1px solid #00ff41; border-radius:6px;">
+          </div>
+
+        </div>
+
       </div>
 
     </div>
@@ -593,7 +674,9 @@ if (logoutBtn) {
   });
 }
 
-// ─── HAZİNE / İTEM AL MANTIĞI ──────────────────────────────────────────────
+// ─── HAZİNE / İTEM AL MANTIĞI ─────────────────────────────────────────
+let currentFoundItems = [];
+
 async function loadTreasureStatus() {
   try {
     const data = await api('/api/treasure/status');
@@ -612,13 +695,13 @@ function renderCooldowns(cooldowns) {
     if (!badge || !text) return;
 
     if (cd.is_ready) {
-      badge.className = 'cooldown-badge cd-ready';
+      badge.className = 'cooldown-badge cd-ready d-flex justify-content-between align-items-center';
       text.className = 'badge bg-success';
       text.textContent = 'Hazır';
     } else {
-      badge.className = 'cooldown-badge cd-waiting';
+      badge.className = 'cooldown-badge cd-waiting d-flex justify-content-between align-items-center';
       text.className = 'badge bg-warning text-dark';
-      text.textContent = `Bekleme: ${cd.remaining_text}`;
+      text.textContent = 'Beklemede';
       badge.title = `Sonraki hak: ${cd.next_available_at}`;
     }
   });
@@ -633,11 +716,16 @@ const scanErrorMsg = $('scanErrorMsg');
 const scanResultsContainer = $('scanResultsContainer');
 const foundItemsList = $('foundItemsList');
 const scanSummaryBadge = $('scanSummaryBadge');
+const claimSection = $('claimSection');
+const claimItemSelect = $('claimItemSelect');
 
 startScanBtn?.addEventListener('click', async () => {
   startScanBtn.disabled = true;
   hide(scanErrorMsg);
   hide(scanResultsContainer);
+  hide(claimSection);
+  hide($('claimErrorBox'));
+  hide($('claimSuccessBox'));
   show(scanLoadingBox);
 
   try {
@@ -653,45 +741,61 @@ startScanBtn?.addEventListener('click', async () => {
     scanSummaryBadge.textContent = `${data.pages_scanned || 0} Sayfa Taranıldı • ${data.summary}`;
 
     foundItemsList.innerHTML = '';
+    currentFoundItems = data.found_items || [];
 
-    if (!data.found_items || data.found_items.length === 0) {
+    if (currentFoundItems.length === 0) {
       let msg = '<div class="col-12"><div class="p-3 text-center" style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.15); border-radius:8px; font-family:var(--font-mono); color:var(--clr-text-muted);">';
       if (data.cooldown_suppressed_count > 0) {
         msg += `<i class="bi bi-hourglass-split me-1 text-warning"></i>Haritada hedef ödül var ancak <strong>bekleme süreniz (cooldown)</strong> dolmadığı için kısıtlandı.`;
       } else {
-        msg += `<i class="bi bi-x-circle me-1 text-danger"></i>50 sayfada PRİNCE, HAZA HUNTER veya EFSANE ÇERÇEVE ödülü bulunamadı.`;
+        msg += `<i class="bi bi-x-circle me-1 text-danger"></i>50 sayfada PRINCE, HAZA HUNTER veya EFSANE ÇERÇEVE ödülü bulunamadı.`;
       }
       msg += '</div></div>';
       foundItemsList.innerHTML = msg;
+      hide(claimSection);
     } else {
-      data.found_items.forEach(item => {
+      // Ödül kartlarını oluştur
+      currentFoundItems.forEach((item, index) => {
         let borderClass = 'prince-border';
         let colorStyle = 'color:#ffd700;';
         if (item.reward_id === 659334) { borderClass = 'hunter-border'; colorStyle = 'color:#00ff41;'; }
         else if (item.reward_id === 6) { borderClass = 'frame-border'; colorStyle = 'color:#c084fc;'; }
 
         const card = document.createElement('div');
-        card.className = 'col-12 col-md-6';
+        card.className = 'col-12';
         card.innerHTML = `
-          <div class="treasure-card ${borderClass} d-flex align-items-center justify-content-between">
-            <div>
-              <div style="${colorStyle} font-weight:900; font-family:var(--font-mono); font-size:1.05rem; letter-spacing:0.05em;">
-                ${item.icon || '🔥'} ${item.name}
-              </div>
-              <div style="font-size:0.75rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:2px;">
-                Reward ID: <code>${item.reward_id}</code> • Sayfa: <strong style="color:#fff;">${item.page}</strong>
+          <div class="treasure-card ${borderClass} d-flex align-items-center justify-content-between p-3" style="cursor:pointer;" onclick="selectClaimItem(${index})">
+            <div class="d-flex align-items-center gap-3">
+              <div style="font-size:1.8rem;">${item.icon || '🔥'}</div>
+              <div>
+                <div style="${colorStyle} font-weight:900; font-family:var(--font-mono); font-size:1.05rem; letter-spacing:0.05em;">
+                  ${item.name}
+                </div>
+                <div style="font-size:0.75rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:2px;">
+                  Sayfa: <strong style="color:#fff;">${item.page}</strong> • Kutu / Grid ID: <strong style="color:var(--clr-green);">#${item.grid}</strong>
+                </div>
               </div>
             </div>
-            <div class="text-end">
-              <div style="font-size:0.7rem; color:var(--clr-green-dim); font-family:var(--font-mono);">KUTU / GRID ID</div>
-              <div style="font-size:1.2rem; font-weight:bold; font-family:var(--font-mono); color:#fff; text-shadow:0 0 8px rgba(0,255,65,0.5);">
-                #${item.grid}
-              </div>
+            <div>
+              <button class="nh-btn py-1 px-3" style="font-size:0.75rem!important;" onclick="event.stopPropagation(); selectClaimItem(${index});">
+                <i class="bi bi-check2-circle me-1"></i>Seç
+              </button>
             </div>
           </div>
         `;
         foundItemsList.appendChild(card);
       });
+
+      // Select kutusunu doldur ve göster
+      claimItemSelect.innerHTML = '';
+      currentFoundItems.forEach((item, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = `${item.icon || '🔥'} ${item.name} (Sayfa: ${item.page}, Kutu / Grid ID: #${item.grid})`;
+        claimItemSelect.appendChild(opt);
+      });
+
+      show(claimSection);
     }
 
   } catch (err) {
@@ -700,6 +804,101 @@ startScanBtn?.addEventListener('click', async () => {
     scanErrorMsg.textContent = 'Tarama Hatası: ' + err.message;
   } finally {
     startScanBtn.disabled = false;
+  }
+});
+
+// İtem Seçme Fonksiyonu
+window.selectClaimItem = function(index) {
+  if (claimItemSelect && currentFoundItems[index]) {
+    claimItemSelect.value = index;
+    $('claimSelectedBadge').textContent = `${currentFoundItems[index].name} (#${currentFoundItems[index].grid})`;
+    claimSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
+
+claimItemSelect?.addEventListener('change', () => {
+  const idx = parseInt(claimItemSelect.value, 10);
+  if (currentFoundItems[idx]) {
+    $('claimSelectedBadge').textContent = `${currentFoundItems[idx].name} (#${currentFoundItems[idx].grid})`;
+  }
+});
+
+// ─── ÖDÜLÜ GÖNDER / IŞIK YAK BUTONU ────────────────────────────────────
+$('sendLightUpBtn')?.addEventListener('click', async () => {
+  hide($('claimErrorBox'));
+  hide($('claimSuccessBox'));
+
+  const midVal = $('claimMidInput').value.trim();
+  const tokenVal = $('claimTokenInput').value.trim();
+  const selectedIdx = parseInt(claimItemSelect.value, 10);
+  const selectedItem = currentFoundItems[selectedIdx];
+
+  if (!selectedItem) {
+    show($('claimErrorBox'));
+    $('claimErrorBox').textContent = 'Lütfen gönderilecek ödülü seçin.';
+    return;
+  }
+
+  if (!midVal || !tokenVal) {
+    show($('claimErrorBox'));
+    $('claimErrorBox').textContent = 'Lütfen TOKEN VE ID GİRİNİZ (Hazaclub ID ve Token alanları zorunludur).';
+    return;
+  }
+
+  const btn = $('sendLightUpBtn');
+  btn.disabled = true;
+  show($('claimLoading'));
+
+  try {
+    const res = await api('/api/treasure/light-up', {
+      method: 'POST',
+      body: JSON.stringify({
+        grid_id: selectedItem.grid,
+        page_no: selectedItem.page,
+        h_mid: midVal,
+        h_token: tokenVal
+      })
+    });
+
+    hide($('claimLoading'));
+
+    if (res.status === 'success' || res.ret === 1) {
+      show($('claimSuccessBox'));
+      let rewardsHtml = '';
+      if (res.show_rewards && res.show_rewards.length > 0) {
+        rewardsHtml = '<div class="mt-2 d-flex flex-wrap gap-2">' + res.show_rewards.map(r => `
+          <div class="p-2 d-flex align-items-center gap-2" style="background:rgba(0,255,65,0.15); border:1px solid #00ff41; border-radius:6px;">
+            ${r.icon ? `<img src="${r.icon}" style="width:28px;height:28px;object-fit:contain;">` : ''}
+            <span style="font-family:var(--font-mono); font-weight:bold; color:#fff;">${r.name || r.kind_name}</span>
+            <span class="badge bg-success">${r.term_str || ''}</span>
+          </div>
+        `).join('') + '</div>';
+      }
+
+      $('claimSuccessBox').innerHTML = `
+        <div style="font-family:var(--font-mono); font-weight:bold; color:#00ff41; font-size:0.95rem;">
+          <i class="bi bi-check-circle-fill me-1"></i>İŞLEM BAŞARILI!
+        </div>
+        <div style="font-size:0.8rem; color:#e0e0e0; font-family:var(--font-mono); margin-top:4px;">
+          ${res.msg || 'Işık başarıyla yakıldı ve ödül Hazaclub hesabınıza aktarıldı.'}
+        </div>
+        <div style="font-size:0.75rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:4px;">
+          Hedef Kutu: <strong>#${selectedItem.grid}</strong> (Sayfa: ${selectedItem.page}) • Alıcı MID: <strong>${midVal}</strong>
+        </div>
+        ${rewardsHtml}
+      `;
+
+      loadTreasureStatus();
+    } else {
+      show($('claimErrorBox'));
+      $('claimErrorBox').textContent = res.msg || 'Hazaclub işlem hatası.';
+    }
+  } catch (err) {
+    hide($('claimLoading'));
+    show($('claimErrorBox'));
+    $('claimErrorBox').textContent = 'Gönderim Hatası: ' + err.message;
+  } finally {
+    btn.disabled = false;
   }
 });
 
