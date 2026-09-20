@@ -747,8 +747,10 @@ startScanBtn?.addEventListener('click', async () => {
       let msg = '<div class="col-12"><div class="p-3 text-center" style="background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.15); border-radius:8px; font-family:var(--font-mono); color:var(--clr-text-muted);">';
       if (data.cooldown_suppressed_count > 0) {
         msg += `<i class="bi bi-hourglass-split me-1 text-warning"></i>Haritada hedef ödül var ancak <strong>bekleme süreniz (cooldown)</strong> dolmadığı için kısıtlandı.`;
+      } else if (data.error_detail) {
+        msg += `<i class="bi bi-exclamation-triangle me-1 text-warning"></i>${data.error_detail}`;
       } else {
-        msg += `<i class="bi bi-x-circle me-1 text-danger"></i>50 sayfada PRINCE, HAZA HUNTER veya EFSANE ÇERÇEVE ödülü bulunamadı.`;
+        msg += `<i class="bi bi-x-circle me-1 text-danger"></i>${data.pages_scanned || 0} sayfada hedef ödül bulunamadı.`;
       }
       msg += '</div></div>';
       foundItemsList.innerHTML = msg;
