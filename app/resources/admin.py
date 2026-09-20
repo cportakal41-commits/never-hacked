@@ -1,15 +1,14 @@
 import logging
+import hashlib
 from functools import wraps
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
 from .. import db
-from ..models import Token, User, BlockedId, TreasureScanLog, RewardCooldown
+from ..models import Token, User, BlockedId, TreasureScanLog, RewardCooldown, TreasureClaimLog
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin_api", __name__)
 
-
-import hashlib
 
 def get_current_admin_password() -> str:
     """Aktif admin şifresini güvenle döndürür."""
@@ -33,7 +32,6 @@ def admin_required(f):
         expected_pass = get_current_admin_password()
         expected_tok = generate_admin_token(expected_pass)
 
-        # Gelen anahtar (X-Admin-Key, X-Admin-Password veya Authorization Header)
         auth_val = (
             request.headers.get("X-Admin-Key") or
             request.headers.get("X-Admin-Password") or
@@ -43,11 +41,9 @@ def admin_required(f):
         if auth_val.startswith("Bearer "):
             auth_val = auth_val[7:].strip()
 
-        # Doğrudan şifre veya geçerli admin session token'ı eşleşiyorsa izin ver!
         if auth_val and auth_val in (expected_pass, expected_tok):
             return f(*args, **kwargs)
 
-        # Alternatif JWT kontrolü
         if auth_val:
             try:
                 from flask_jwt_extended import decode_token
@@ -81,7 +77,7 @@ def admin_login():
     }), 200
 
 
-# ─── İstatistikler ─────────────────────────────────────────────────────────────
+# ─── İstatistikler ────────────────────────────────────────────────────────────
 @admin_bp.route("/stats", methods=["GET"])
 @admin_required
 def get_stats():
@@ -91,7 +87,7 @@ def get_stats():
     revoked_tokens = Token.query.filter_by(revoked=True).count()
     total_users = User.query.count()
     total_blocked = BlockedId.query.count()
-
+    total_claims = TreasureClaimLog.query.count()
     total_searches = db.session.query(db.func.sum(Token.usage_count)).scalar() or 0
 
     return jsonify({
@@ -100,15 +96,16 @@ def get_stats():
         "revoked_tokens": revoked_tokens,
         "total_users": total_users,
         "total_blocked": total_blocked,
+        "total_claims": total_claims,
         "total_searches": int(total_searches),
     })
 
 
-# ─── Token Listeleme ──────────────────────────────────────────────────────────
+# ─── Token Listeleme (IP ve Son Giriş ile) ────────────────────────────────────
 @admin_bp.route("/tokens", methods=["GET"])
 @admin_required
 def list_tokens():
-    """Tüm erişim token'larını listeler."""
+    """Tüm erişim token'larını son IP ve kullanım zamanıyla listeler."""
     tokens = Token.query.order_by(Token.created_at.desc()).all()
     return jsonify([{
         "id":           t.id,
@@ -116,6 +113,7 @@ def list_tokens():
         "note":         t.note or "Not yok",
         "revoked":      t.revoked,
         "usage_count":  t.usage_count or 0,
+        "last_ip":      getattr(t, "last_ip", None) or "-",
         "created_at":   t.created_at.strftime("%d.%m.%Y %H:%M") if t.created_at else "-",
         "last_used_at": t.last_used_at.strftime("%d.%m.%Y %H:%M") if t.last_used_at else "Kullanılmadı",
     } for t in tokens])
@@ -159,7 +157,7 @@ def generate_token():
     }), 201
 
 
-# ─── Token Durumunu Değiştir (İptal Et / Aktif Et) ────────────────────────────
+# ─── Token Durumunu Değiştir (İptal Et / Aktif Et) ───────────────────────────
 @admin_bp.route("/tokens/<int:token_id>/toggle", methods=["POST"])
 @admin_required
 def toggle_token(token_id: int):
@@ -194,134 +192,53 @@ def delete_token(token_id: int):
     return jsonify({"msg": "Token başarıyla silindi"})
 
 
-# ─── Sorgulanan Kullanıcılar ──────────────────────────────────────────────────
-@admin_bp.route("/users", methods=["GET"])
+# ─── Hazine & Ödül Gönderim Geçmişi (TÜM İŞLEMLER) ───────────────────────────
+@admin_bp.route("/treasure-claims", methods=["GET"])
 @admin_required
-def list_users():
-    """Sorgulanıp kaydedilen tüm Hazaclub kullanıcılarını listeler."""
-    users = User.query.order_by(User.id.desc()).all()
+def list_treasure_claims():
+    """
+    Kullanıcıların yaptığı tüm ödül alma / ışık yakma işlemlerini listeler.
+    Girilen Hazaclub ID, Token, IP adresi, hedef kutu ve kazanılan ödüller dahil.
+    """
+    claims = TreasureClaimLog.query.order_by(TreasureClaimLog.id.desc()).limit(300).all()
     return jsonify([{
-        "id":         u.id,
-        "mid":        u.mid,
-        "nick":       u.nick,
-        "avatar":     u.avatar,
-        "ip":         u.ip or "-",
-        "device":     u.device or "-",
-        "created_at": u.created_at.strftime("%d.%m.%Y %H:%M") if u.created_at else "-",
-    } for u in users])
+        "id":               c.id,
+        "token_key":        c.token_key,
+        "token_note":       c.token_note or "-",
+        "client_ip":        c.client_ip or "-",
+        "action_type":      c.action_type or "LIGHT_UP",
+        "hazaclub_mid":     c.hazaclub_mid or "-",
+        "hazaclub_token":   c.hazaclub_token or "-",
+        "grid_id":          c.grid_id or "-",
+        "page_no":          c.page_no or "-",
+        "item_name":        c.item_name or "Ödül",
+        "reward_id":        c.reward_id,
+        "status":           c.status,
+        "response_summary": c.response_summary or "-",
+        "created_at":       c.created_at.strftime("%d.%m.%Y %H:%M:%S") if c.created_at else "-",
+    } for c in claims])
 
 
-# ─── Kullanıcı Sil ────────────────────────────────────────────────────────────
-@admin_bp.route("/users/<int:user_id>", methods=["DELETE"])
+@admin_bp.route("/treasure-claims/<int:claim_id>", methods=["DELETE"])
 @admin_required
-def delete_user(user_id: int):
-    """Sorgu geçmişinden bir kullanıcıyı siler."""
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"msg": "Kullanıcı bulunamadı"}), 404
+def delete_treasure_claim(claim_id: int):
+    """Tekil bir ödül işlem kaydını siler."""
+    claim = TreasureClaimLog.query.get(claim_id)
+    if not claim:
+        return jsonify({"msg": "Kayıt bulunamadı"}), 404
 
-    db.session.delete(user)
+    db.session.delete(claim)
     db.session.commit()
-    return jsonify({"msg": "Kullanıcı kaydı silindi"})
+    return jsonify({"msg": "İşlem kaydı silindi"})
 
 
-# ─── Kısıtlı ID Listeleme ─────────────────────────────────────────────────────
-@admin_bp.route("/blocked-ids", methods=["GET"])
+@admin_bp.route("/treasure-claims/clear", methods=["DELETE"])
 @admin_required
-def list_blocked_ids():
-    """Admin tarafından sorgulanması engellenen tüm MID'leri listeler."""
-    items = BlockedId.query.order_by(BlockedId.id.desc()).all()
-    return jsonify([{
-        "id":         b.id,
-        "mid":        b.mid,
-        "note":       b.note or "Admin tarafından kısıtlı erişim",
-        "created_at": b.created_at.strftime("%d.%m.%Y %H:%M") if b.created_at else "-",
-    } for b in items])
-
-
-# ─── Yeni Kısıtlı ID Ekle ─────────────────────────────────────────────────────
-@admin_bp.route("/blocked-ids", methods=["POST"])
-@admin_required
-def add_blocked_id():
-    """Sorgulama engeli listesine yeni bir ID ekler."""
-    data = request.get_json(silent=True) or {}
-    mid_raw = str(data.get("mid", "")).strip()
-    note = str(data.get("note", "")).strip() or "Admin tarafından kısıtlı erişim"
-
-    if not mid_raw or not mid_raw.isdigit():
-        return jsonify({"msg": "Lütfen geçerli bir sayısal ID giriniz!"}), 400
-
-    mid_num = int(mid_raw)
-    exists = BlockedId.query.filter_by(mid=mid_num).first()
-    if exists:
-        return jsonify({"msg": f"{mid_num} ID'si zaten kısıtlı listesinde mevcut!"}), 409
-
-    new_blocked = BlockedId(mid=mid_num, note=note)
-    db.session.add(new_blocked)
+def clear_all_treasure_claims():
+    """Tüm ödül işlem geçmişini temizler."""
+    count = TreasureClaimLog.query.delete()
     db.session.commit()
-
-    logger.info(f"Yeni kısıtlı ID eklendi: MID={mid_num}, Not={note}")
-    return jsonify({
-        "msg": f"{mid_num} ID'si başarıyla engellendi",
-        "blocked": {
-            "id":         new_blocked.id,
-            "mid":        new_blocked.mid,
-            "note":       new_blocked.note,
-            "created_at": new_blocked.created_at.strftime("%d.%m.%Y %H:%M"),
-        }
-    }), 201
-
-
-# ─── Kısıtlı ID Kaldır / Sil ──────────────────────────────────────────────────
-@admin_bp.route("/blocked-ids/<int:blocked_id>", methods=["DELETE"])
-@admin_required
-def delete_blocked_id(blocked_id: int):
-    """Kısıtlanan bir ID'nin engelini kaldırır."""
-    item = BlockedId.query.get(blocked_id)
-    if not item:
-        return jsonify({"msg": "Kısıtlı ID kaydı bulunamadı"}), 404
-
-    mid_val = item.mid
-    db.session.delete(item)
-    db.session.commit()
-    logger.info(f"Kısıtlı ID engeli kaldırıldı: MID={mid_val}")
-    return jsonify({"msg": f"{mid_val} ID'sinin engeli başarıyla kaldırıldı"})
-# ─── Hazine (İtem Al) Tarama Geçmişi ──────────────────────────────────────────
-@admin_bp.route("/treasure-scans", methods=["GET"])
-@admin_required
-def list_treasure_scans():
-    """Tüm token kullanıcılarının yaptığı hazine tarama geçmişini listeler."""
-    import json
-    scans = TreasureScanLog.query.order_by(TreasureScanLog.id.desc()).limit(100).all()
-    results = []
-    for s in scans:
-        try:
-            items = json.loads(s.raw_results or "[]")
-        except Exception:
-            items = []
-        results.append({
-            "id":            s.id,
-            "token_key":     s.token_key,
-            "token_note":    s.token_note or "-",
-            "found_summary": s.found_summary,
-            "items":         items,
-            "pages_scanned": s.pages_scanned,
-            "created_at":    s.created_at.strftime("%d.%m.%Y %H:%M") if s.created_at else "-",
-        })
-    return jsonify(results)
-
-
-@admin_bp.route("/treasure-scans/<int:scan_id>", methods=["DELETE"])
-@admin_required
-def delete_treasure_scan(scan_id: int):
-    """Belirli bir tarama logunu siler."""
-    scan = TreasureScanLog.query.get(scan_id)
-    if not scan:
-        return jsonify({"msg": "Tarama kaydı bulunamadı"}), 404
-
-    db.session.delete(scan)
-    db.session.commit()
-    return jsonify({"msg": "Tarama kaydı silindi"})
+    return jsonify({"msg": f"Tüm ({count}) işlem geçmişi temizlendi"})
 
 
 # ─── Hazine Ödül Kısıtlamaları (Cooldownlar) ──────────────────────────────────
@@ -364,3 +281,104 @@ def reset_treasure_cooldown(cd_id: int):
     db.session.commit()
     logger.info(f"Cooldown sıfırlandı: Token={token_name}, Ödül={reward_name}")
     return jsonify({"msg": f"{token_name} için {reward_name} bekleme süresi sıfırlandı!"})
+
+
+@admin_bp.route("/treasure-cooldowns/reset-all", methods=["POST"])
+@admin_required
+def reset_all_treasure_cooldowns():
+    """Tüm kullanıcıların bekleme sürelerini (cooldown) topluca sıfırlar."""
+    count = RewardCooldown.query.delete()
+    db.session.commit()
+    logger.info(f"Tüm ({count}) cooldown süreleri sıfırlandı.")
+    return jsonify({"msg": f"Tüm ({count}) ödül bekleme süreleri başarıyla sıfırlandı!"})
+
+
+# ─── Kısıtlı ID Listeleme ────────────────────────────────────────────────────
+@admin_bp.route("/blocked-ids", methods=["GET"])
+@admin_required
+def list_blocked_ids():
+    """Admin tarafından sorgulanması engellenen tüm MID'leri listeler."""
+    items = BlockedId.query.order_by(BlockedId.id.desc()).all()
+    return jsonify([{
+        "id":         b.id,
+        "mid":        b.mid,
+        "note":       b.note or "Admin tarafından kısıtlı erişim",
+        "created_at": b.created_at.strftime("%d.%m.%Y %H:%M") if b.created_at else "-",
+    } for b in items])
+
+
+@admin_bp.route("/blocked-ids", methods=["POST"])
+@admin_required
+def add_blocked_id():
+    """Sorgulama engeli listesine yeni bir ID ekler."""
+    data = request.get_json(silent=True) or {}
+    mid_raw = str(data.get("mid", "")).strip()
+    note = str(data.get("note", "")).strip() or "Admin tarafından kısıtlı erişim"
+
+    if not mid_raw or not mid_raw.isdigit():
+        return jsonify({"msg": "Lütfen geçerli bir sayısal ID giriniz!"}), 400
+
+    mid_num = int(mid_raw)
+    exists = BlockedId.query.filter_by(mid=mid_num).first()
+    if exists:
+        return jsonify({"msg": f"{mid_num} ID'si zaten kısıtlı listesinde mevcut!"}), 409
+
+    new_blocked = BlockedId(mid=mid_num, note=note)
+    db.session.add(new_blocked)
+    db.session.commit()
+
+    logger.info(f"Yeni kısıtlı ID eklendi: MID={mid_num}, Not={note}")
+    return jsonify({
+        "msg": f"{mid_num} ID'si başarıyla engellendi",
+        "blocked": {
+            "id":         new_blocked.id,
+            "mid":        new_blocked.mid,
+            "note":       new_blocked.note,
+            "created_at": new_blocked.created_at.strftime("%d.%m.%Y %H:%M"),
+        }
+    }), 201
+
+
+@admin_bp.route("/blocked-ids/<int:blocked_id>", methods=["DELETE"])
+@admin_required
+def delete_blocked_id(blocked_id: int):
+    """Kısıtlanan bir ID'nin engelini kaldırır."""
+    item = BlockedId.query.get(blocked_id)
+    if not item:
+        return jsonify({"msg": "Kısıtlı ID kaydı bulunamadı"}), 404
+
+    mid_val = item.mid
+    db.session.delete(item)
+    db.session.commit()
+    logger.info(f"Kısıtlı ID engeli kaldırıldı: MID={mid_val}")
+    return jsonify({"msg": f"{mid_val} ID'sinin engeli başarıyla kaldırıldı"})
+
+
+# ─── Sorgulanan Kullanıcılar ─────────────────────────────────────────────────
+@admin_bp.route("/users", methods=["GET"])
+@admin_required
+def list_users():
+    """Sorgulanıp kaydedilen tüm Hazaclub kullanıcılarını listeler."""
+    users = User.query.order_by(User.id.desc()).all()
+    return jsonify([{
+        "id":         u.id,
+        "mid":        u.mid,
+        "nick":       u.nick,
+        "avatar":     u.avatar,
+        "ip":         u.ip or "-",
+        "device":     u.device or "-",
+        "created_at": u.created_at.strftime("%d.%m.%Y %H:%M") if u.created_at else "-",
+    } for u in users])
+
+
+@admin_bp.route("/users/<int:user_id>", methods=["DELETE"])
+@admin_required
+def delete_user(user_id: int):
+    """Sorgu geçmişinden bir kullanıcıyı siler."""
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"msg": "Kullanıcı bulunamadı"}), 404
+
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({"msg": "Kullanıcı kaydı silindi"})

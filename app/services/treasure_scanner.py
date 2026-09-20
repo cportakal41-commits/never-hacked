@@ -201,24 +201,8 @@ def scan_treasure_grid(token_key: str, token_note: str = "Genel Kullanıcı"):
         logger.error(f"Tarama sırasında hata oluştu: {e}", exc_info=True)
         api_error_msg = f"Tarama bağlantı hatası: {str(e)}"
 
-    # Yeni bulunan ödüller için cooldown sürelerini veritabanında başlat / güncelle
-    for rid in rewards_to_cooldown:
-        info = TARGET_REWARDS[rid]
-        until_time = now + timedelta(days=info["cooldown_days"])
-
-        cd_record = RewardCooldown.query.filter_by(token_key=token_key, reward_id=rid).first()
-        if not cd_record:
-            cd_record = RewardCooldown(
-                token_key=token_key,
-                reward_id=rid,
-                reward_name=info["name"],
-                last_found_at=now,
-                cooldown_until=until_time
-            )
-            db.session.add(cd_record)
-        else:
-            cd_record.last_found_at = now
-            cd_record.cooldown_until = until_time
+    # NOT: Tarama esnasında cooldown BAŞLATILMAZ! 
+    # Cooldown yalnızca kullanıcı kutuyu başarıyla açıp ödülü aldığında (light_up) başlar.
 
     # Özet metni oluştur
     if found_items:

@@ -2,7 +2,7 @@
 <html lang="tr" data-bs-theme="dark">
 <head>
   <meta charset="utf-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
@@ -21,7 +21,7 @@
       background: var(--clr-bg-card);
       border: 1px solid var(--clr-border);
       border-radius: var(--radius);
-      padding: 1.25rem;
+      padding: 1.1rem;
       text-align: center;
       transition: all var(--transition);
       position: relative;
@@ -33,14 +33,14 @@
     }
     .stat-value {
       font-family: var(--font-title);
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 700;
       color: var(--clr-green);
       letter-spacing: 0.05em;
     }
     .stat-label {
       font-family: var(--font-mono);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--clr-text-muted);
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -50,16 +50,17 @@
       --bs-table-bg: transparent;
       --bs-table-color: var(--clr-text);
       font-family: var(--font-mono);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       margin-bottom: 0;
     }
     .table-hacker th {
       color: var(--clr-green-dim);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       border-bottom-color: var(--clr-border);
       padding: 0.75rem;
+      white-space: nowrap;
     }
     .table-hacker td {
       border-bottom-color: rgba(0, 255, 65, 0.08);
@@ -94,17 +95,52 @@
       opacity: 1;
       color: #fff;
     }
+    .admin-tab-nav {
+      background: rgba(13, 26, 13, 0.8);
+      border: 1px solid var(--clr-border);
+      border-radius: var(--radius);
+      padding: 0.4rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .admin-tab-btn {
+      background: transparent;
+      color: var(--clr-text-muted);
+      border: 1px solid transparent;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .admin-tab-btn:hover {
+      color: var(--clr-green);
+      border-color: rgba(0, 255, 65, 0.3);
+      background: rgba(0, 255, 65, 0.05);
+    }
+    .admin-tab-btn.active {
+      color: #000 !important;
+      background: var(--clr-green) !important;
+      border-color: var(--clr-green) !important;
+      box-shadow: 0 0 12px rgba(0, 255, 65, 0.5);
+    }
   </style>
 </head>
 
 <body>
 <div class="matrix-bg" aria-hidden="true"></div>
 
-<div class="container-fluid position-relative py-4 px-md-5" style="z-index:1; max-width:1200px;">
+<div class="container-fluid position-relative py-4 px-md-5" style="z-index:1; max-width:1300px;">
 
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
-  <!-- 1. ADMİN ŞİFRE GİRİŞ EKRANI (Oturum Yokken Sadece Bu Görünür)          -->
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 1. ADMİN ŞİFRE GİRİŞ EKRANI (Oturum Yokken Sadece Bu Görünür)               -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
   <div id="adminLoginSection" class="d-none" style="max-width: 440px; margin: 4rem auto 0;">
     <div class="nh-card p-4 text-center">
       <h2 class="nh-title glow mb-2" style="font-size: 1.7rem;">ADMIN GİRİŞİ</h2>
@@ -123,7 +159,8 @@
             id="adminPassInput"
             class="form-control nh-input"
             placeholder="Şifrenizi giriniz..."
-            autocomplete="new-password" value=""
+            autocomplete="new-password"
+            value=""
             style="border-right:none!important;"
           >
           <button class="btn nh-input" type="button" id="togglePassBtn" style="border-left:none!important; color:var(--clr-green)!important;" title="Şifreyi Göster / Gizle">
@@ -146,13 +183,13 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
-  <!-- 2. ADMİN ANA DASHBOARD (Sadece Şifre Doğruysa Açılır)                   -->
-  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+  <!-- 2. ADMİN ANA DASHBOARD (Sadece Şifre Doğruysa Açılır)                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════════ -->
   <div id="adminDashboardSection" class="d-none">
     
-    <!-- ══ Üst Bar ═══════════════════════════════════════════════════════════ -->
-    <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-4 border-bottom" style="border-color: var(--clr-border)!important;">
+    <!-- Üst Bar -->
+    <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-3 mb-3 border-bottom" style="border-color: var(--clr-border)!important;">
       <div>
         <h1 class="nh-title glow mb-0" style="font-size: clamp(1.4rem, 4vw, 2.2rem);">
           <i class="bi bi-shield-shaded me-2"></i>ADMIN MERKEZİ
@@ -173,7 +210,7 @@
       </div>
     </header>
 
-    <!-- ══ İstatistik Kartları ═══════════════════════════════════════════════ -->
+    <!-- İstatistik Kartları -->
     <div class="row g-3 mb-4">
       <div class="col-6 col-md">
         <div class="stat-card">
@@ -189,14 +226,14 @@
       </div>
       <div class="col-6 col-md">
         <div class="stat-card">
-          <div class="stat-value" id="statSearches">0</div>
-          <div class="stat-label"><i class="bi bi-search me-1"></i>Toplam Sorgu</div>
+          <div class="stat-value" id="statClaims">0</div>
+          <div class="stat-label"><i class="bi bi-gift me-1"></i>Ödül İşlemi</div>
         </div>
       </div>
       <div class="col-6 col-md">
         <div class="stat-card">
-          <div class="stat-value" id="statUsers">0</div>
-          <div class="stat-label"><i class="bi bi-people me-1"></i>Kayıtlı Hedef</div>
+          <div class="stat-value" id="statSearches">0</div>
+          <div class="stat-label"><i class="bi bi-search me-1"></i>Toplam Sorgu</div>
         </div>
       </div>
       <div class="col-6 col-md">
@@ -207,184 +244,321 @@
       </div>
     </div>
 
-    <!-- ══ Yeni Token Üretme Paneli ══════════════════════════════════════════ -->
-    <div class="nh-card p-4 mb-4">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
-          <i class="bi bi-plus-circle me-2"></i>YENİ ERİŞİM TOKENI OLUŞTUR
-        </h5>
-      </div>
+    <!-- ═══════════ ADMİN SEKME MENÜSÜ (NAV-PILLS) ═══════════ -->
+    <nav class="admin-tab-nav mb-4" id="adminTabNav">
+      <button class="admin-tab-btn active" data-tab="tabTokens">
+        <i class="bi bi-key-fill"></i>ERİŞİM TOKENLARI
+      </button>
+      <button class="admin-tab-btn" data-tab="tabClaims">
+        <i class="bi bi-gift-fill"></i>HAZİNE & ÖDÜL İŞLEMLERİ
+      </button>
+      <button class="admin-tab-btn" data-tab="tabCooldowns">
+        <i class="bi bi-hourglass-split"></i>BEKLEME SÜRELERİ (COOLDOWN)
+      </button>
+      <button class="admin-tab-btn" data-tab="tabBlocked">
+        <i class="bi bi-shield-slash-fill"></i>KISITLI ID (KARA LİSTE)
+      </button>
+      <button class="admin-tab-btn" data-tab="tabUsers">
+        <i class="bi bi-people-fill"></i>SORGULANAN HEDEFLER
+      </button>
+    </nav>
 
-      <div class="row g-2 align-items-center">
-        <div class="col-md-6">
-          <input
-            type="text"
-            id="newTokenNote"
-            class="form-control nh-input"
-            placeholder="Açıklama / Kime Ait (Örn: VIP Müşteri, Test Anahtarı)"
-            autocomplete="off"
-          >
-        </div>
-        <div class="col-md-3">
-          <input
-            type="text"
-            id="newCustomKey"
-            class="form-control nh-input"
-            placeholder="Özel Anahtar (Boş bırakılırsa otomatik üretilir)"
-            autocomplete="off"
-          >
-        </div>
-        <div class="col-md-3">
-          <button id="generateBtn" class="nh-btn w-100 py-2">
-            <i class="bi bi-lightning-charge-fill me-1"></i>Token Üret
-          </button>
-        </div>
-      </div>
 
-      <!-- Son Üretilen Token Bildirimi -->
-      <div id="newlyCreatedBox" class="d-none mt-3 p-3" style="background:rgba(0,255,65,0.05); border:1px dashed var(--clr-green); border-radius:var(--radius);">
-        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-          <div>
-            <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--clr-green);">
-              <i class="bi bi-check2-circle me-1"></i>Yeni Token Hazır:
-            </span>
-            <span id="createdKeyDisplay" style="font-family:var(--font-mono); font-size:1rem; font-weight:bold; color:#fff; margin-left:8px;"></span>
-          </div>
-          <button id="copyCreatedBtn" class="nh-btn py-1 px-3" style="font-size:0.75rem!important">
-            <i class="bi bi-clipboard me-1"></i>Kopyala
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══ Token Yönetim Tablosu ═════════════════════════════════════════════ -->
-    <div class="nh-card p-4 mb-4">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
-          <i class="bi bi-key-fill me-2"></i>ERİŞİM TOKENLARI LİSTESİ
-        </h5>
-        <span id="tokenCountLabel" class="status-badge online">0 Token</span>
-      </div>
-
-      <div class="table-responsive">
-        <table class="table table-hacker">
-          <thead>
-            <tr>
-              <th>Token Anahtarı</th>
-              <th>Açıklama / Not</th>
-              <th>Durum</th>
-              <th>Sorgu Sayısı</th>
-              <th>Oluşturulma</th>
-              <th>Son Kullanım</th>
-              <th class="text-end">İşlemler</th>
-            </tr>
-          </thead>
-          <tbody id="tokensTableBody">
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">
-                <span class="nh-spinner"></span>Yükleniyor...
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ══ Kısıtlı / Yasaklı ID Yönetim Paneli (Kara Liste) ═════════════════ -->
-    <div class="nh-card p-4 mb-4" style="border-color: rgba(255, 65, 65, 0.4)!important;">
-      <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div>
-          <h5 class="mb-1" style="font-family:var(--font-title); color:var(--clr-danger); font-size:1.1rem;">
-            <i class="bi bi-shield-slash-fill me-2"></i>KISITLI HEDEF ID'LER (SORGULAMA ENGELİ)
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <!-- SEKME 1: TOKEN YÖNETİMİ                                                  -->
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <div id="tabTokens" class="admin-tab-content">
+      <!-- Yeni Token Üretme Paneli -->
+      <div class="nh-card p-4 mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+            <i class="bi bi-plus-circle me-2"></i>YENİ ERİŞİM TOKENI OLUŞTUR
           </h5>
-          <p class="text-muted mb-0" style="font-size:0.8rem;">
-            Buraya eklenen ID'ler sorgulandığında kullanıcıya <strong style="color:var(--clr-danger);">"Admin tarafından kısıtlı erişim"</strong> hatası verilir ve bilgileri gösterilmez.
-          </p>
         </div>
-        <span id="blockedCountLabel" class="status-badge" style="background:rgba(255,65,65,0.15); color:var(--clr-danger); border:1px solid rgba(255,65,65,0.4);">0 Kısıtlı ID</span>
+
+        <div class="row g-2 align-items-center">
+          <div class="col-md-6">
+            <input
+              type="text"
+              id="newTokenNote"
+              class="form-control nh-input"
+              placeholder="Açıklama / Kime Ait (Örn: VIP Müşteri, Test Anahtarı)"
+              autocomplete="off"
+            >
+          </div>
+          <div class="col-md-3">
+            <input
+              type="text"
+              id="newCustomKey"
+              class="form-control nh-input"
+              placeholder="Özel Anahtar (Boş bırakılırsa otomatik üretilir)"
+              autocomplete="off"
+            >
+          </div>
+          <div class="col-md-3">
+            <button id="generateBtn" class="nh-btn w-100 py-2">
+              <i class="bi bi-lightning-charge-fill me-1"></i>Token Üret
+            </button>
+          </div>
+        </div>
+
+        <!-- Son Üretilen Token Bildirimi -->
+        <div id="newlyCreatedBox" class="d-none mt-3 p-3" style="background:rgba(0,255,65,0.05); border:1px dashed var(--clr-green); border-radius:var(--radius);">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+              <span style="font-family:var(--font-mono); font-size:0.8rem; color:var(--clr-green);">
+                <i class="bi bi-check2-circle me-1"></i>Yeni Token Hazır:
+              </span>
+              <span id="createdKeyDisplay" style="font-family:var(--font-mono); font-size:1rem; font-weight:bold; color:#fff; margin-left:8px;"></span>
+            </div>
+            <button id="copyCreatedBtn" class="nh-btn py-1 px-3" style="font-size:0.75rem!important">
+              <i class="bi bi-clipboard me-1"></i>Kopyala
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Yeni ID Engelleme Formu -->
-      <div class="row g-2 align-items-center mb-4 pb-3 border-bottom" style="border-color: var(--clr-border)!important;">
-        <div class="col-md-4">
-          <input
-            type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            id="newBlockedMid"
-            class="form-control nh-input"
-            placeholder="Engellenecek Kullanıcı ID (Örn: 102379520)"
-            autocomplete="off"
-          >
+      <!-- Token Yönetim Tablosu -->
+      <div class="nh-card p-4 mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+            <i class="bi bi-key-fill me-2"></i>ERİŞİM TOKENLARI LİSTESİ
+          </h5>
+          <span id="tokenCountLabel" class="status-badge online">0 Token</span>
         </div>
-        <div class="col-md-5">
-          <input
-            type="text"
-            id="newBlockedNote"
-            class="form-control nh-input"
-            placeholder="Engel Sebebi (Varsayılan: Admin tarafından kısıtlı erişim)"
-            autocomplete="off"
-          >
-        </div>
-        <div class="col-md-3">
-          <button id="addBlockedBtn" class="nh-btn nh-btn-danger w-100 py-2">
-            <i class="bi bi-slash-circle me-1"></i>ID'yi Kısıtla
-          </button>
-        </div>
-      </div>
 
-      <!-- Engellenen ID'ler Tablosu -->
-      <div class="table-responsive">
-        <table class="table table-hacker">
-          <thead>
-            <tr>
-              <th>Engelli ID</th>
-              <th>Engel Sebebi / Not</th>
-              <th>Engellenme Tarihi</th>
-              <th class="text-end">Engeli Kaldır</th>
-            </tr>
-          </thead>
-          <tbody id="blockedTableBody">
-            <tr>
-              <td colspan="4" class="text-center py-4 text-muted">
-                <span class="nh-spinner"></span>Yükleniyor...
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="table table-hacker">
+            <thead>
+              <tr>
+                <th>Token Anahtarı</th>
+                <th>Açıklama / Not</th>
+                <th>Durum</th>
+                <th>Son Kullanıcı IP</th>
+                <th>Son Kullanım / Giriş</th>
+                <th>Sorgu</th>
+                <th>Oluşturulma</th>
+                <th class="text-end">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="tokensTableBody">
+              <tr>
+                <td colspan="8" class="text-center py-4 text-muted">
+                  <span class="nh-spinner"></span>Yükleniyor...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- ══ Sorgulanan Hedef Kullanıcılar ═════════════════════════════════════ -->
-    <div class="nh-card p-4">
-      <div class="d-flex align-items-center justify-content-between mb-3">
-        <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
-          <i class="bi bi-database-check me-2"></i>SORGULANAN HEDEF KULLANICILAR
-        </h5>
-        <span id="userCountLabel" class="status-badge online">0 Kayıt</span>
-      </div>
 
-      <div class="table-responsive">
-        <table class="table table-hacker">
-          <thead>
-            <tr>
-              <th>Avatar</th>
-              <th>ID</th>
-              <th>Kullanıcı Adı (Nick)</th>
-              <th>IP Adresi</th>
-              <th>Cihaz</th>
-              <th>Kayıt Tarihi</th>
-              <th class="text-end">Sil</th>
-            </tr>
-          </thead>
-          <tbody id="usersTableBody">
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">
-                <span class="nh-spinner"></span>Yükleniyor...
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <!-- SEKME 2: HAZİNE & ÖDÜL İŞLEMLERİ (TÜM İŞLEM KAYITLARI)                     -->
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <div id="tabClaims" class="admin-tab-content d-none">
+      <div class="nh-card p-4 mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-2 border-bottom" style="border-color: rgba(0,255,65,0.2)!important;">
+          <div>
+            <h5 class="mb-1" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.15rem;">
+              <i class="bi bi-gift-fill me-2"></i>HAZİNE & ÖDÜL İŞLEM GEÇMİŞİ (TÜM İŞLEMLER)
+            </h5>
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+              Kullanıcıların kutu açma, ödül alma ve ışık yakma (light_up) işlemlerinin detaylı istihbarat kaydı.
+            </p>
+          </div>
+          <div class="d-flex gap-2">
+            <button id="refreshClaimsBtn" class="nh-btn py-1 px-3" style="font-size:0.75rem!important">
+              <i class="bi bi-arrow-clockwise me-1"></i>Yenile
+            </button>
+            <button id="clearClaimsBtn" class="nh-btn nh-btn-danger py-1 px-3" style="font-size:0.75rem!important">
+              <i class="bi bi-trash3 me-1"></i>Tüm Geçmişi Temizle
+            </button>
+            <span id="claimsCountLabel" class="status-badge online">0 İşlem</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hacker">
+            <thead>
+              <tr>
+                <th>Tarih & Saat</th>
+                <th>Kayıtlı Giriş Tokeni</th>
+                <th>Kullanıcı IP</th>
+                <th>Hedef Ödül</th>
+                <th>Kutu & Sayfa</th>
+                <th>Hazaclub ID (h_mid)</th>
+                <th>Hazaclub Token (h_token)</th>
+                <th>Durum</th>
+                <th>Kazanılan / Detay</th>
+                <th class="text-end">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="claimsTableBody">
+              <tr>
+                <td colspan="10" class="text-center py-4 text-muted">
+                  <span class="nh-spinner"></span>Yükleniyor...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <!-- SEKME 3: BEKLEME SÜRELERİ (COOLDOWN) VE SIFIRLAMA                       -->
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <div id="tabCooldowns" class="admin-tab-content d-none">
+      <div class="nh-card p-4 mb-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-2 border-bottom" style="border-color: rgba(0,255,65,0.2)!important;">
+          <div>
+            <h5 class="mb-1" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.15rem;">
+              <i class="bi bi-hourglass-split me-2"></i>ÖDÜL BEKLEME SÜRELERİ (COOLDOWN)
+            </h5>
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+              Kullanıcıların ödül aldıktan sonraki bekleme süreleri (PRINCE: 3 Gün, Diğerleri: 1 Gün). Buradan sıfırlayabilirsiniz.
+            </p>
+          </div>
+          <div class="d-flex gap-2">
+            <button id="resetAllCooldownsBtn" class="nh-btn nh-btn-danger py-1 px-3" style="font-size:0.75rem!important">
+              <i class="bi bi-arrow-counterclockwise me-1"></i>Tüm Cooldown'ları Sıfırla
+            </button>
+            <span id="cooldownCountLabel" class="status-badge online">0 Kayıt</span>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hacker">
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Ödül Adı</th>
+                <th>Durum</th>
+                <th>Son Alınma Tarihi</th>
+                <th>Cooldown Bitiş</th>
+                <th class="text-end">Sıfırla</th>
+              </tr>
+            </thead>
+            <tbody id="cooldownTableBody">
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">
+                  <span class="nh-spinner"></span>Yükleniyor...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <!-- SEKME 4: KISITLI / YASAKLI ID YÖNETİMİ (KARA LİSTE)                     -->
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <div id="tabBlocked" class="admin-tab-content d-none">
+      <div class="nh-card p-4 mb-4" style="border-color: rgba(255, 65, 65, 0.4)!important;">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+          <div>
+            <h5 class="mb-1" style="font-family:var(--font-title); color:var(--clr-danger); font-size:1.1rem;">
+              <i class="bi bi-shield-slash-fill me-2"></i>KISITLI HEDEF ID'LER (SORGULAMA ENGELİ)
+            </h5>
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+              Buraya eklenen ID'ler sorgulandığında kullanıcıya <strong style="color:var(--clr-danger);">"Admin tarafından kısıtlı erişim"</strong> hatası verilir ve bilgileri gösterilmez.
+            </p>
+          </div>
+          <span id="blockedCountLabel" class="status-badge" style="background:rgba(255,65,65,0.15); color:var(--clr-danger); border:1px solid rgba(255,65,65,0.4);">0 Kısıtlı ID</span>
+        </div>
+
+        <!-- Yeni ID Engelleme Formu -->
+        <div class="row g-2 align-items-center mb-4 pb-3 border-bottom" style="border-color: var(--clr-border)!important;">
+          <div class="col-md-4">
+            <input
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              id="newBlockedMid"
+              class="form-control nh-input"
+              placeholder="Engellenecek Kullanıcı ID (Örn: 102379520)"
+              autocomplete="off"
+            >
+          </div>
+          <div class="col-md-5">
+            <input
+              type="text"
+              id="newBlockedNote"
+              class="form-control nh-input"
+              placeholder="Engel Sebebi (Varsayılan: Admin tarafından kısıtlı erişim)"
+              autocomplete="off"
+            >
+          </div>
+          <div class="col-md-3">
+            <button id="addBlockedBtn" class="nh-btn nh-btn-danger w-100 py-2">
+              <i class="bi bi-slash-circle me-1"></i>ID'yi Kısıtla
+            </button>
+          </div>
+        </div>
+
+        <!-- Engellenen ID'ler Tablosu -->
+        <div class="table-responsive">
+          <table class="table table-hacker">
+            <thead>
+              <tr>
+                <th>Engelli ID</th>
+                <th>Engel Sebebi / Not</th>
+                <th>Engellenme Tarihi</th>
+                <th class="text-end">Engeli Kaldır</th>
+              </tr>
+            </thead>
+            <tbody id="blockedTableBody">
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted">
+                  <span class="nh-spinner"></span>Yükleniyor...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <!-- SEKME 5: SORGULANAN HEDEF KULLANICILAR                                   -->
+    <!-- ═════════════════════════════════════════════════════════════════════════ -->
+    <div id="tabUsers" class="admin-tab-content d-none">
+      <div class="nh-card p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="mb-0" style="font-family:var(--font-title); color:var(--clr-green); font-size:1.1rem;">
+            <i class="bi bi-database-check me-2"></i>SORGULANAN HEDEF KULLANICILAR
+          </h5>
+          <span id="userCountLabel" class="status-badge online">0 Kayıt</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hacker">
+            <thead>
+              <tr>
+                <th>Avatar</th>
+                <th>ID</th>
+                <th>Kullanıcı Adı (Nick)</th>
+                <th>IP Adresi</th>
+                <th>Cihaz</th>
+                <th>Kayıt Tarihi</th>
+                <th class="text-end">Sil</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">
+                  <span class="nh-spinner"></span>Yükleniyor...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -396,15 +570,27 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-/* ═══════════════════════════════════════════════════════════════════════════
+/* ═════════════════════════════════════════════════════════════════════════════
    Never Hacked – Şifre Korumalı Admin Paneli Scripti
-   ═══════════════════════════════════════════════════════════════════════════ */
+   ═════════════════════════════════════════════════════════════════════════════ */
 
 let adminToken = localStorage.getItem('nh_admin_token') || null;
 
 const $ = (id) => document.getElementById(id);
 const show = (el) => el.classList.remove('d-none');
 const hide = (el) => el.classList.add('d-none');
+
+// ─── SEKME YÖNETİMİ ──────────────────────────────────────────────────────────
+document.querySelectorAll('#adminTabNav .admin-tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#adminTabNav .admin-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const targetId = btn.getAttribute('data-tab');
+    document.querySelectorAll('.admin-tab-content').forEach(c => hide(c));
+    show($(targetId));
+  });
+});
 
 // ─── Oturum Durumuna Göre Arayüzü Yönet ──────────────────────────────────────
 function renderAdminState() {
@@ -419,7 +605,7 @@ function renderAdminState() {
   }
 }
 
-// ─── Admin Giriş Yap ────────────────────────────────────────────────────────
+// ─── Admin Giriş Yap ─────────────────────────────────────────────────────────
 $('adminLoginBtn').addEventListener('click', doAdminLogin);
 $('adminPassInput').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') doAdminLogin();
@@ -463,7 +649,7 @@ async function doAdminLogin() {
   }
 }
 
-// ─── Şifre Göster / Gizle ve Hızlı Doldurma ─────────────────────────────────
+// ─── Şifre Göster / Gizle ───────────────────────────────────────────────────
 $('togglePassBtn').addEventListener('click', () => {
   const inp = $('adminPassInput');
   const icon = $('passEyeIcon');
@@ -476,14 +662,14 @@ $('togglePassBtn').addEventListener('click', () => {
   }
 });
 
-// ─── Admin Çıkış Yap ────────────────────────────────────────────────────────
+// ─── Admin Çıkış Yap ─────────────────────────────────────────────────────────
 $('adminLogoutBtn').addEventListener('click', () => {
   adminToken = null;
   localStorage.removeItem('nh_admin_token');
   renderAdminState();
 });
 
-// ─── Korumalı Admin API İsteği ──────────────────────────────────────────────
+// ─── Korumalı Admin API İsteği ───────────────────────────────────────────────
 let isHandlingSessionExpiry = false;
 async function adminFetch(path, options = {}) {
   const headers = { 'Content-Type': 'application/json', ...options.headers };
@@ -506,11 +692,18 @@ async function adminFetch(path, options = {}) {
   return res;
 }
 
-// ─── Verileri Yükle ─────────────────────────────────────────────────────────
+// ─── Verileri Yükle ──────────────────────────────────────────────────────────
 async function loadAll() {
   if (!adminToken) return;
   try {
-    await Promise.all([loadStats(), loadTokens(), loadBlockedIds(), loadUsers(), loadTreasureScans(), loadTreasureCooldowns()]);
+    await Promise.all([
+      loadStats(),
+      loadTokens(),
+      loadClaims(),
+      loadTreasureCooldowns(),
+      loadBlockedIds(),
+      loadUsers()
+    ]);
   } catch (_) { }
 }
 
@@ -522,15 +715,15 @@ async function loadStats() {
     const d = await res.json();
     $('statActiveTokens').textContent  = d.active_tokens;
     $('statRevokedTokens').textContent = d.revoked_tokens;
+    $('statClaims').textContent        = d.total_claims ?? 0;
     $('statSearches').textContent      = d.total_searches;
-    $('statUsers').textContent         = d.total_users;
     $('statBlockedIds').textContent    = d.total_blocked ?? 0;
   } catch (e) {
     console.error("Stats hatası:", e);
   }
 }
 
-// ─── 2. Token Listesi ───────────────────────────────────────────────────────
+// ─── 2. Token Listesi (IP ve Son Kullanım Dahil) ─────────────────────────────
 async function loadTokens() {
   const tbody = $('tokensTableBody');
   try {
@@ -541,7 +734,7 @@ async function loadTokens() {
     $('tokenCountLabel').textContent = `${tokens.length} Token`;
 
     if (tokens.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-3 text-muted">Henüz token oluşturulmadı.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-3 text-muted">Henüz token oluşturulmadı.</td></tr>`;
       return;
     }
 
@@ -561,9 +754,10 @@ async function loadTokens() {
           </td>
           <td style="color:#fff;">${escapeHtml(t.note)}</td>
           <td>${statusBadge}</td>
-          <td style="color:var(--clr-green);">${t.usage_count} kez</td>
-          <td>${t.created_at}</td>
-          <td>${t.last_used_at}</td>
+          <td style="color:var(--clr-green); font-family:var(--font-mono);">${t.last_ip || '-'}</td>
+          <td style="color:var(--clr-text-muted); font-size:0.8rem;">${t.last_used_at}</td>
+          <td style="color:var(--clr-green); font-weight:bold;">${t.usage_count} kez</td>
+          <td style="color:var(--clr-text-muted); font-size:0.8rem;">${t.created_at}</td>
           <td class="text-end">
             <button class="nh-btn py-1 px-2 me-1" style="font-size:0.7rem!important" onclick="toggleToken(${t.id})">
               ${isRev ? '<i class="bi bi-check-circle me-1"></i>Aktif Et' : '<i class="bi bi-slash-circle me-1"></i>İptal Et'}
@@ -577,50 +771,163 @@ async function loadTokens() {
     }).join('');
 
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
   }
 }
 
-// ─── 3. Kullanıcılar Listesi ────────────────────────────────────────────────
-async function loadUsers() {
-  const tbody = $('usersTableBody');
+// ─── 3. Hazine & Ödül İşlem Geçmişi (Tüm İşlemler) ───────────────────────────
+async function loadClaims() {
+  const tbody = $('claimsTableBody');
+  if (!tbody) return;
   try {
-    const res = await adminFetch('/api/admin/users');
-    if (!res.ok) throw new Error("Kullanıcılar getirilemedi");
-    const users = await res.json();
+    const res = await adminFetch('/api/admin/treasure-claims');
+    if (!res.ok) throw new Error("İşlem geçmişi getirilemedi");
+    const items = await res.json();
 
-    $('userCountLabel').textContent = `${users.length} Kayıt`;
+    $('claimsCountLabel').textContent = `${items.length} İşlem`;
 
-    if (users.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-3 text-muted">Henüz sorgulanan kullanıcı yok.</td></tr>`;
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-muted">Henüz ödül gönderme / ışık yakma işlemi yapılmadı.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = users.map(u => `
+    tbody.innerHTML = items.map(c => {
+      const isSuccess = c.status === 'SUCCESS';
+      const statusBadge = isSuccess
+        ? `<span class="badge bg-success">BAŞARILI</span>`
+        : `<span class="badge bg-danger">HATA</span>`;
+
+      let maskedToken = c.hazaclub_token;
+      if (maskedToken && maskedToken.length > 16) {
+        maskedToken = maskedToken.substring(0, 10) + '...' + maskedToken.substring(maskedToken.length - 6);
+      }
+
+      return `
+        <tr>
+          <td style="color:var(--clr-text-muted); font-size:0.78rem;">${c.created_at}</td>
+          <td>
+            <strong style="color:var(--clr-green); font-family:var(--font-mono);">${escapeHtml(c.token_key)}</strong>
+            <div style="font-size:0.72rem; color:var(--clr-text-muted);">${escapeHtml(c.token_note)}</div>
+          </td>
+          <td style="font-family:var(--font-mono); font-size:0.8rem; color:#fff;">${c.client_ip}</td>
+          <td style="font-weight:bold; color:#ffd700;">${escapeHtml(c.item_name)}</td>
+          <td>
+            <span class="badge bg-dark border border-success" style="font-size:0.75rem;">
+              Kutu: #${c.grid_id} (Sayfa: ${c.page_no})
+            </span>
+          </td>
+          <td style="font-family:var(--font-mono); font-weight:bold; color:var(--clr-green);">${c.hazaclub_mid}</td>
+          <td>
+            <code style="font-size:0.72rem; color:#c084fc; cursor:pointer;" title="Kopyalamak için tıkla" onclick="copyToClipboard('${escapeHtml(c.hazaclub_token)}')">
+              ${escapeHtml(maskedToken)}
+            </code>
+          </td>
+          <td>${statusBadge}</td>
+          <td style="color:#e0e0e0; font-size:0.78rem;">${escapeHtml(c.response_summary)}</td>
+          <td class="text-end">
+            <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.7rem!important;" onclick="deleteClaim(${c.id})">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="10" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+$('refreshClaimsBtn')?.addEventListener('click', loadClaims);
+
+$('clearClaimsBtn')?.addEventListener('click', async () => {
+  if (!confirm("Tüm ödül işlem geçmişini temizlemek istediğinize emin misiniz?")) return;
+  try {
+    const res = await adminFetch('/api/admin/treasure-claims/clear', { method: 'DELETE' });
+    const d = await res.json();
+    alert(d.msg || "Temizlendi");
+    await loadClaims();
+  } catch (e) {
+    alert(e.message);
+  }
+});
+
+async function deleteClaim(id) {
+  if (!confirm("Bu kayıt silinsin mi?")) return;
+  try {
+    const res = await adminFetch(`/api/admin/treasure-claims/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("Silinemedi");
+    await loadClaims();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// ─── 4. Bekleme Süreleri (Cooldown) ve Sıfırlama ─────────────────────────────
+async function loadTreasureCooldowns() {
+  const tbody = $('cooldownTableBody');
+  if (!tbody) return;
+  try {
+    const res = await adminFetch('/api/admin/treasure-cooldowns');
+    if (!res.ok) throw new Error("Cooldown bilgisi alınamadı");
+    const items = await res.json();
+
+    $('cooldownCountLabel').textContent = `${items.length} Kayıt`;
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Aktif ödül kısıtlaması (cooldown) yok. Tüm tokenlar hazır durumda.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items.map(c => `
       <tr>
+        <td style="font-family:var(--font-mono); font-size:0.85rem; color:var(--clr-green); font-weight:bold;">${escapeHtml(c.token_key)}</td>
+        <td style="color:#fff; font-weight:bold;">${escapeHtml(c.reward_name)}</td>
         <td>
-          <img src="${u.avatar || ''}" style="width:36px; height:36px; border-radius:6px; border:1px solid var(--clr-border); object-fit:cover;"
-               onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 40 40\\'%3E%3Crect width=\\'40\\' height=\\'40\\' fill=\\'%230d1a0d\\'/ %3E%3Ctext x=\\'20\\' y=\\'25\\' text-anchor=\\'middle\\' fill=\\'%2300ff41\\' font-size=\\'18\\'%3E?%3C/text%3E%3C/svg%3E'">
+          <span class="badge ${c.is_active ? 'bg-warning text-dark' : 'bg-secondary'}" style="font-size:0.75rem;">
+            ${c.remaining_text}
+          </span>
         </td>
-        <td style="color:var(--clr-green); font-weight:bold;">${u.mid}</td>
-        <td style="color:#fff;">${escapeHtml(u.nick || 'İsimsiz')}</td>
-        <td style="color:var(--clr-green-dim);">${u.ip}</td>
-        <td>${escapeHtml(u.device)}</td>
-        <td>${u.created_at}</td>
+        <td style="color:var(--clr-text-muted); font-size:0.8rem;">${c.last_found_at}</td>
+        <td style="color:var(--clr-text-muted); font-size:0.8rem;">${c.cooldown_until}</td>
         <td class="text-end">
-          <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.7rem!important" onclick="deleteUser(${u.id})">
-            <i class="bi bi-trash"></i>
+          <button class="nh-btn py-1 px-2" style="font-size:0.75rem!important;" onclick="resetCooldown(${c.id}, '${escapeHtml(c.token_key)}', '${escapeHtml(c.reward_name)}')">
+            <i class="bi bi-arrow-counterclockwise me-1"></i>Sıfırla
           </button>
         </td>
       </tr>
     `).join('');
 
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
   }
 }
 
-// ─── 4. Kısıtlı / Yasaklı ID'ler (Kara Liste) ───────────────────────────────
+async function resetCooldown(id, token, reward) {
+  if (!confirm(`${token} için ${reward} bekleme süresini hemen sıfırlamak istiyor musunuz?`)) return;
+  try {
+    const res = await adminFetch(`/api/admin/treasure-cooldowns/${id}/reset`, { method: 'POST' });
+    if (!res.ok) throw new Error("Sıfırlanamadı");
+    copyToClipboard(`${reward} bekleme süresi sıfırlandı!`);
+    await loadTreasureCooldowns();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+$('resetAllCooldownsBtn')?.addEventListener('click', async () => {
+  if (!confirm("Tüm kullanıcıların ödül bekleme sürelerini (cooldown) topluca sıfırlamak istiyor musunuz?")) return;
+  try {
+    const res = await adminFetch('/api/admin/treasure-cooldowns/reset-all', { method: 'POST' });
+    const d = await res.json();
+    alert(d.msg || "Tüm cooldownlar sıfırlandı!");
+    await loadTreasureCooldowns();
+  } catch (e) {
+    alert(e.message);
+  }
+});
+
+// ─── 5. Kısıtlı ID'ler (Kara Liste) ──────────────────────────────────────────
 async function loadBlockedIds() {
   const tbody = $('blockedTableBody');
   try {
@@ -655,8 +962,7 @@ async function loadBlockedIds() {
   }
 }
 
-// Yeni Kısıtlı ID Ekle
-$('addBlockedBtn').addEventListener('click', async () => {
+$('addBlockedBtn')?.addEventListener('click', async () => {
   const mid = $('newBlockedMid').value.trim();
   const note = $('newBlockedNote').value.trim();
   const btn = $('addBlockedBtn');
@@ -685,18 +991,10 @@ $('addBlockedBtn').addEventListener('click', async () => {
     alert(e.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i>ID\'yi Kısıtla';
+    btn.innerHTML = '<i class="bi bi-slash-circle me-1"></i>ID'yi Kısıtla';
   }
 });
 
-$('newBlockedMid').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') $('addBlockedBtn').click();
-});
-$('newBlockedNote').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') $('addBlockedBtn').click();
-});
-
-// Kısıtlı ID Sil / Engeli Kaldır
 async function deleteBlockedId(id, mid) {
   if (!confirm(`${mid} ID'sinin kısıtlamasını kaldırmak istediğinize emin misiniz?`)) return;
   try {
@@ -708,8 +1006,58 @@ async function deleteBlockedId(id, mid) {
   }
 }
 
-// ─── 5. Yeni Token Üret ─────────────────────────────────────────────────────
-$('generateBtn').addEventListener('click', async () => {
+// ─── 6. Sorgulanan Kullanıcılar ──────────────────────────────────────────────
+async function loadUsers() {
+  const tbody = $('usersTableBody');
+  try {
+    const res = await adminFetch('/api/admin/users');
+    if (!res.ok) throw new Error("Kullanıcılar getirilemedi");
+    const users = await res.json();
+
+    $('userCountLabel').textContent = `${users.length} Kayıt`;
+
+    if (users.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="text-center py-3 text-muted">Henüz sorgulanan kullanıcı yok.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = users.map(u => `
+      <tr>
+        <td>
+          <img src="${u.avatar || ''}" style="width:36px; height:36px; border-radius:6px; border:1px solid var(--clr-border); object-fit:cover;"
+               onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 40 40\'%3E%3Crect width=\'40\' height=\'40\' fill=\'%230d1a0d\'/ %3E%3Ctext x=\'20\' y=\'25\' text-anchor=\'middle\' fill=\'%2300ff41\' font-size=\'18\'%3E?%3C/text%3E%3C/svg%3E'">
+        </td>
+        <td style="color:var(--clr-green); font-weight:bold;">${u.mid}</td>
+        <td style="color:#fff;">${escapeHtml(u.nick || 'İsimsiz')}</td>
+        <td style="color:var(--clr-green-dim); font-family:var(--font-mono);">${u.ip}</td>
+        <td>${escapeHtml(u.device)}</td>
+        <td style="color:var(--clr-text-muted); font-size:0.8rem;">${u.created_at}</td>
+        <td class="text-end">
+          <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.7rem!important" onclick="deleteUser(${u.id})">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+async function deleteUser(id) {
+  if (!confirm("Bu kullanıcı kaydını silmek istediğinize emin misiniz?")) return;
+  try {
+    const res = await adminFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("Kullanıcı silinemedi");
+    await loadAll();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+// ─── Token Üret / Sil / Durum ───────────────────────────────────────────────
+$('generateBtn')?.addEventListener('click', async () => {
   const note = $('newTokenNote').value.trim();
   const customKey = $('newCustomKey').value.trim();
   const btn = $('generateBtn');
@@ -740,12 +1088,11 @@ $('generateBtn').addEventListener('click', async () => {
   }
 });
 
-$('copyCreatedBtn').addEventListener('click', () => {
+$('copyCreatedBtn')?.addEventListener('click', () => {
   const k = $('createdKeyDisplay').textContent;
   if (k) copyToClipboard(k);
 });
 
-// ─── 5. Token Durumunu Değiştir (Revoke/Aktif) ──────────────────────────────
 async function toggleToken(id) {
   try {
     const res = await adminFetch(`/api/admin/tokens/${id}/toggle`, { method: 'POST' });
@@ -756,7 +1103,6 @@ async function toggleToken(id) {
   }
 }
 
-// ─── 6. Token Sil ───────────────────────────────────────────────────────────
 async function deleteToken(id) {
   if (!confirm("Bu tokenı kalıcı olarak silmek istediğinize emin misiniz?")) return;
   try {
@@ -768,19 +1114,6 @@ async function deleteToken(id) {
   }
 }
 
-// ─── 7. Kullanıcı Sil ───────────────────────────────────────────────────────
-async function deleteUser(id) {
-  if (!confirm("Bu kullanıcı kaydını silmek istediğinize emin misiniz?")) return;
-  try {
-    const res = await adminFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error("Kullanıcı silinemedi");
-    await loadAll();
-  } catch (e) {
-    alert(e.message);
-  }
-}
-
-// ─── Kopyalama Yardımcısı ───────────────────────────────────────────────────
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
     const el = document.createElement('div');
@@ -813,122 +1146,7 @@ function escapeHtml(str) {
   }[tag] || tag));
 }
 
-$('refreshBtn').addEventListener('click', loadAll);
-
-
-// ─── 8. Hazine (İtem Al) Tarama Geçmişi & Cooldownlar ────────────────────────
-async function loadTreasureScans() {
-  const tbody = $('treasureScansTableBody');
-  if (!tbody) return;
-  try {
-    const res = await adminFetch('/api/admin/treasure-scans');
-    if (!res.ok) throw new Error("Tarama geçmişi alınamadı");
-    const items = await res.json();
-
-    $('treasureScanCountLabel').textContent = `${items.length} Tarama`;
-
-    if (items.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted">Henüz hazine taraması yapılmadı.</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = items.map(s => {
-      let itemsHtml = '';
-      if (s.items && s.items.length > 0) {
-        itemsHtml = s.items.map(it => {
-          let color = '#ffd700';
-          if (it.reward_id === 659334) color = '#00ff41';
-          if (it.reward_id === 6) color = '#c084fc';
-          return `<span class="badge bg-dark border me-1 my-1" style="border-color:${color}!important; color:${color}!important; font-size:0.75rem;">
-            ${it.name} (#${it.grid} - S:${it.page})
-          </span>`;
-        }).join('');
-      } else {
-        itemsHtml = `<span style="color:var(--clr-text-muted); font-size:0.8rem;">${escapeHtml(s.found_summary)}</span>`;
-      }
-
-      return `
-        <tr>
-          <td style="font-family:var(--font-mono); font-size:0.85rem; color:var(--clr-green); font-weight:bold;">${escapeHtml(s.token_key)}</td>
-          <td style="color:#fff;">${escapeHtml(s.token_note)}</td>
-          <td>${itemsHtml}</td>
-          <td style="font-family:var(--font-mono); font-size:0.85rem;">${s.pages_scanned} Sayfa</td>
-          <td style="color:var(--clr-text-muted); font-size:0.8rem;">${s.created_at}</td>
-          <td class="text-end">
-            <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.75rem!important;" onclick="deleteTreasureScan(${s.id})">
-              <i class="bi bi-trash"></i>
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
-  }
-}
-
-async function deleteTreasureScan(id) {
-  if (!confirm("Bu tarama kaydını silmek istediğinize emin misiniz?")) return;
-  try {
-    const res = await adminFetch(`/api/admin/treasure-scans/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error("Silinemedi");
-    await loadTreasureScans();
-  } catch (e) {
-    alert(e.message);
-  }
-}
-
-async function loadTreasureCooldowns() {
-  const tbody = $('cooldownTableBody');
-  if (!tbody) return;
-  try {
-    const res = await adminFetch('/api/admin/treasure-cooldowns');
-    if (!res.ok) throw new Error("Cooldown bilgisi alınamadı");
-    const items = await res.json();
-
-    $('cooldownCountLabel').textContent = `${items.length} Kayıt`;
-
-    if (items.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted">Aktif ödül kısıtlaması yok.</td></tr>`;
-      return;
-    }
-
-    tbody.innerHTML = items.map(c => `
-      <tr>
-        <td style="font-family:var(--font-mono); font-size:0.85rem; color:var(--clr-green); font-weight:bold;">${escapeHtml(c.token_key)}</td>
-        <td style="color:#fff; font-weight:bold;">${escapeHtml(c.reward_name)}</td>
-        <td>
-          <span class="badge ${c.is_active ? 'bg-warning text-dark' : 'bg-secondary'}" style="font-size:0.75rem;">
-            ${c.remaining_text}
-          </span>
-        </td>
-        <td style="color:var(--clr-text-muted); font-size:0.8rem;">${c.last_found_at}</td>
-        <td style="color:var(--clr-text-muted); font-size:0.8rem;">${c.cooldown_until}</td>
-        <td class="text-end">
-          <button class="nh-btn nh-btn-primary py-1 px-2" style="font-size:0.75rem!important;" onclick="resetCooldown(${c.id}, '${escapeHtml(c.token_key)}', '${escapeHtml(c.reward_name)}')">
-            <i class="bi bi-arrow-counterclockwise me-1"></i>Sıfırla
-          </button>
-        </td>
-      </tr>
-    `).join('');
-
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
-  }
-}
-
-async function resetCooldown(id, token, reward) {
-  if (!confirm(`${token} için ${reward} bekleme süresini hemen sıfırlamak istiyor musunuz?`)) return;
-  try {
-    const res = await adminFetch(`/api/admin/treasure-cooldowns/${id}/reset`, { method: 'POST' });
-    if (!res.ok) throw new Error("Sıfırlanamadı");
-    copyToClipboard(`${reward} bekleme süresi sıfırlandı!`);
-    await loadTreasureCooldowns();
-  } catch (e) {
-    alert(e.message);
-  }
-}
+$('refreshBtn')?.addEventListener('click', loadAll);
 
 // Başlangıç durumu
 renderAdminState();

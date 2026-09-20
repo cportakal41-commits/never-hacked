@@ -37,6 +37,10 @@ def login():
     # Kullanım sayısını ve tarihini güncelle
     token_record.usage_count = (token_record.usage_count or 0) + 1
     token_record.last_used_at = datetime.utcnow()
+    client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+    if client_ip and "," in client_ip:
+        client_ip = client_ip.split(",")[0].strip()
+    token_record.last_ip = client_ip
     db.session.commit()
 
     # JWT oluştur

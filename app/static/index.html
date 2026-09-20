@@ -857,6 +857,8 @@ $('sendLightUpBtn')?.addEventListener('click', async () => {
       body: JSON.stringify({
         grid_id: selectedItem.grid,
         page_no: selectedItem.page,
+        item_name: selectedItem.name,
+        reward_id: selectedItem.reward_id,
         h_mid: midVal,
         h_token: tokenVal
       })

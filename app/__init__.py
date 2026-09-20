@@ -43,51 +43,138 @@ def create_app() -> Flask:
             db.create_all()
 
             # 2. PostgreSQL için otomatik şema güncellemesi (mevcut tabloda eksik kolon varsa ekle)
-            if db.engine.dialect.name == "postgresql":
-                from sqlalchemy import text
-                with db.engine.connect() as conn:
+            from sqlalchemy import text
+            with db.engine.connect() as conn:
+                if db.engine.dialect.name == "postgresql":
                     conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS "key" VARCHAR(64);'))
                     conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS note VARCHAR(128) DEFAULT \'Genel Erişim\';'))
                     conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS usage_count INTEGER DEFAULT 0;'))
                     conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS last_used_at TIMESTAMP;'))
                     conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS jti VARCHAR(36);'))
                     conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS revoked BOOLEAN DEFAULT FALSE;'))
+                    conn.execute(text('ALTER TABLE tokens ADD COLUMN IF NOT EXISTS "last_ip" VARCHAR(45);'))
                     conn.execute(text('UPDATE tokens SET "key" = \'NH-DEMO-\' || id WHERE "key" IS NULL;'))
                     conn.execute(text('UPDATE tokens SET usage_count = 0 WHERE usage_count IS NULL;'))
                     conn.execute(text('UPDATE tokens SET revoked = FALSE WHERE revoked IS NULL;'))
                     conn.execute(text('CREATE UNIQUE INDEX IF NOT EXISTS ix_tokens_key ON tokens ("key");'))
-                    conn.execute(text('''
-                        CREATE TABLE IF NOT EXISTS blocked_ids (
-                            id SERIAL PRIMARY KEY,
-                            mid INTEGER UNIQUE NOT NULL,
-                            note VARCHAR(255) DEFAULT 'Admin tarafından kısıtlı erişim',
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        );
-                    '''))
-                    conn.execute(text('''
-                        CREATE TABLE IF NOT EXISTS treasure_scan_logs (
-                            id SERIAL PRIMARY KEY,
-                            token_key VARCHAR(64) NOT NULL,
-                            token_note VARCHAR(128) DEFAULT 'Genel Kullanıcı',
-                            found_summary VARCHAR(255) DEFAULT 'Hedef ödül bulunamadı',
-                            raw_results TEXT DEFAULT '[]',
-                            pages_scanned INTEGER DEFAULT 0,
-                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                        );
-                    '''))
-                    conn.execute(text('''
-                        CREATE TABLE IF NOT EXISTS reward_cooldowns (
-                            id SERIAL PRIMARY KEY,
-                            token_key VARCHAR(64) NOT NULL,
-                            reward_id INTEGER NOT NULL,
-                            reward_name VARCHAR(64) NOT NULL,
-                            last_found_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                            cooldown_until TIMESTAMP NOT NULL
-                        );
-                    '''))
+                elif db.engine.dialect.name == "sqlite":
+                    cols = [r[1] for r in conn.execute(text("PRAGMA table_info(tokens);")).fetchall()]
+                    if "last_ip" not in cols:
+                        conn.execute(text("ALTER TABLE tokens ADD COLUMN last_ip VARCHAR(45);"))
+                    if "key" not in cols:
+                        conn.execute(text("ALTER TABLE tokens ADD COLUMN key VARCHAR(64);"))
+                    if "note" not in cols:
+                        conn.execute(text("ALTER TABLE tokens ADD COLUMN note VARCHAR(128);"))
+                    if "usage_count" not in cols:
+                        conn.execute(text("ALTER TABLE tokens ADD COLUMN usage_count INTEGER DEFAULT 0;"))
+                    if "last_used_at" not in cols:
+                        conn.execute(text("ALTER TABLE tokens ADD COLUMN last_used_at TIMESTAMP;"))
+                    if "revoked" not in cols:
+                        conn.execute(text("ALTER TABLE tokens ADD COLUMN revoked BOOLEAN DEFAULT 0;"))
+
+                conn.execute(text('''
+                    CREATE TABLE IF NOT EXISTS blocked_ids (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        mid INTEGER UNIQUE NOT NULL,
+                        note VARCHAR(255) DEFAULT 'Admin tarafından kısıtlı erişim',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                ''' if db.engine.dialect.name == "sqlite" else '''
+                    CREATE TABLE IF NOT EXISTS blocked_ids (
+                        id SERIAL PRIMARY KEY,
+                        mid INTEGER UNIQUE NOT NULL,
+                        note VARCHAR(255) DEFAULT 'Admin tarafından kısıtlı erişim',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                '''))
+
+                conn.execute(text('''
+                    CREATE TABLE IF NOT EXISTS treasure_scan_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        token_key VARCHAR(64) NOT NULL,
+                        token_note VARCHAR(128) DEFAULT 'Genel Kullanıcı',
+                        found_summary VARCHAR(255) DEFAULT 'Hedef ödül bulunamadı',
+                        raw_results TEXT DEFAULT '[]',
+                        pages_scanned INTEGER DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                ''' if db.engine.dialect.name == "sqlite" else '''
+                    CREATE TABLE IF NOT EXISTS treasure_scan_logs (
+                        id SERIAL PRIMARY KEY,
+                        token_key VARCHAR(64) NOT NULL,
+                        token_note VARCHAR(128) DEFAULT 'Genel Kullanıcı',
+                        found_summary VARCHAR(255) DEFAULT 'Hedef ödül bulunamadı',
+                        raw_results TEXT DEFAULT '[]',
+                        pages_scanned INTEGER DEFAULT 0,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                '''))
+
+                conn.execute(text('''
+                    CREATE TABLE IF NOT EXISTS reward_cooldowns (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        token_key VARCHAR(64) NOT NULL,
+                        reward_id INTEGER NOT NULL,
+                        reward_name VARCHAR(64) NOT NULL,
+                        last_found_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        cooldown_until TIMESTAMP NOT NULL
+                    );
+                ''' if db.engine.dialect.name == "sqlite" else '''
+                    CREATE TABLE IF NOT EXISTS reward_cooldowns (
+                        id SERIAL PRIMARY KEY,
+                        token_key VARCHAR(64) NOT NULL,
+                        reward_id INTEGER NOT NULL,
+                        reward_name VARCHAR(64) NOT NULL,
+                        last_found_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        cooldown_until TIMESTAMP NOT NULL
+                    );
+                '''))
+
+                conn.execute(text('''
+                    CREATE TABLE IF NOT EXISTS treasure_claim_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        token_key VARCHAR(64) NOT NULL,
+                        token_note VARCHAR(128) DEFAULT 'Genel Kullanıcı',
+                        client_ip VARCHAR(45) DEFAULT '-',
+                        action_type VARCHAR(32) DEFAULT 'LIGHT_UP',
+                        hazaclub_mid INTEGER,
+                        hazaclub_token VARCHAR(255),
+                        grid_id INTEGER,
+                        page_no INTEGER,
+                        item_name VARCHAR(64) DEFAULT 'Bilinmeyen Ödül',
+                        reward_id INTEGER,
+                        status VARCHAR(32) DEFAULT 'SUCCESS',
+                        response_summary VARCHAR(512) DEFAULT '',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                ''' if db.engine.dialect.name == "sqlite" else '''
+                    CREATE TABLE IF NOT EXISTS treasure_claim_logs (
+                        id SERIAL PRIMARY KEY,
+                        token_key VARCHAR(64) NOT NULL,
+                        token_note VARCHAR(128) DEFAULT 'Genel Kullanıcı',
+                        client_ip VARCHAR(45) DEFAULT '-',
+                        action_type VARCHAR(32) DEFAULT 'LIGHT_UP',
+                        hazaclub_mid INTEGER,
+                        hazaclub_token VARCHAR(255),
+                        grid_id INTEGER,
+                        page_no INTEGER,
+                        item_name VARCHAR(64) DEFAULT 'Bilinmeyen Ödül',
+                        reward_id INTEGER,
+                        status VARCHAR(32) DEFAULT 'SUCCESS',
+                        response_summary VARCHAR(512) DEFAULT '',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                '''))
+
+                try:
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_treasure_scan_logs_token ON treasure_scan_logs (token_key);'))
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_reward_cooldowns_token ON reward_cooldowns (token_key);'))
-                    conn.commit()
+                    conn.execute(text('CREATE INDEX IF NOT EXISTS ix_treasure_claim_logs_token ON treasure_claim_logs (token_key);'))
+                    # Reset any existing cooldowns
+                    conn.execute(text('DELETE FROM reward_cooldowns;'))
+                except Exception:
+                    pass
+                conn.commit()
 
             # 3. Varsayılan Demo Token'ı kontrol et ve ekle
             demo_token = Token.query.filter_by(key="NH-DEMO-2026-KEY").first()
