@@ -479,6 +479,50 @@ const $    = (id) => document.getElementById(id);
 const show = (el) => el.classList.remove('d-none');
 const hide = (el) => el.classList.add('d-none');
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[tag] || tag));
+}
+
+function resetClaimFeedback() {
+  hide($('claimErrorBox'));
+  hide($('claimSuccessBox'));
+  const box = $('claimErrorBox');
+  box.removeAttribute('style');
+  box.className = 'nh-error d-none my-2';
+  box.innerHTML = '';
+}
+
+function showClaimError(msg, isFreeTier) {
+  const box = $('claimErrorBox');
+  show(box);
+  if (isFreeTier) {
+    box.classList.remove('nh-error');
+    box.setAttribute('style', 'background:rgba(255, 0, 85, 0.14)!important; border:1px solid #ff0055!important; box-shadow:0 0 16px rgba(255, 0, 85, 0.45)!important; border-radius:8px!important; padding:15px!important; color:#ffffff!important; text-align:left!important; display:block!important; margin-top:12px!important;');
+    box.innerHTML = `
+      <div style="font-weight:900; font-size:1.05rem; color:#ff3366; letter-spacing:0.05em; margin-bottom:6px; font-family:var(--font-mono);">
+        <i class="bi bi-shield-slash-fill me-2"></i>ERİŞİM KISITLAMASI
+      </div>
+      <div style="font-size:0.95rem; color:#ffffff; font-weight:bold; font-family:var(--font-mono); line-height:1.4;">
+        ${escapeHtml(msg || 'Üzgünüm, ücretsiz sunucu kullanıyorsunuz')}
+      </div>
+      <div style="font-size:0.75rem; color:#b0b0b0; font-family:var(--font-mono); margin-top:8px; border-top:1px dashed rgba(255,255,255,0.2); padding-top:6px;">
+        <i class="bi bi-exclamation-triangle-fill me-1" style="color:#ff3366;"></i>Bu ödülü ve özellikleri Hazaclub hesabınıza aktarabilmek için VIP / Premium sunucu erişimi gereklidir.
+      </div>
+    `;
+  } else {
+    box.classList.add('nh-error');
+    box.removeAttribute('style');
+    box.textContent = msg;
+  }
+}
+
 // ─── UI Durumunu Ayarla ─────────────────────────────────────────────────────
 // Giriş yapılmışsa: GİRİŞ KISMI TAMAMEN KAYBOLUR, SADECE ARA KISMI KALIR!
 function renderState() {
@@ -845,8 +889,7 @@ claimItemSelect?.addEventListener('change', () => {
 
 // ─── ÖDÜLÜ GÖNDER / IŞIK YAK BUTONU ────────────────────────────────────
 $('sendLightUpBtn')?.addEventListener('click', async () => {
-  hide($('claimErrorBox'));
-  hide($('claimSuccessBox'));
+  resetClaimFeedback();
 
   const midVal = $('claimMidInput').value.trim();
   const tokenVal = $('claimTokenInput').value.trim();
@@ -854,14 +897,12 @@ $('sendLightUpBtn')?.addEventListener('click', async () => {
   const selectedItem = currentFoundItems[selectedIdx];
 
   if (!selectedItem) {
-    show($('claimErrorBox'));
-    $('claimErrorBox').textContent = 'Lütfen gönderilecek ödülü seçin.';
+    showClaimError('Lütfen gönderilecek ödülü seçin.', false);
     return;
   }
 
   if (!midVal || !tokenVal) {
-    show($('claimErrorBox'));
-    $('claimErrorBox').textContent = 'Lütfen TOKEN VE ID GİRİNİZ (Hazaclub ID ve Token alanları zorunludur).';
+    showClaimError('Lütfen TOKEN VE ID GİRİNİZ (Hazaclub ID ve Token alanları zorunludur).', false);
     return;
   }
 
@@ -913,28 +954,15 @@ $('sendLightUpBtn')?.addEventListener('click', async () => {
 
       loadTreasureStatus();
     } else {
-      show($('claimErrorBox'));
-      $('claimErrorBox').textContent = res.msg || 'Hazaclub işlem hatası.';
+      const resMsg = res.msg || 'Hazaclub işlem hatası.';
+      const isFreeTier = resMsg.includes('ücretsiz sunucu') || resMsg.includes('Üzgünüm') || resMsg.includes('ucretsiz');
+      showClaimError(resMsg, isFreeTier);
     }
   } catch (err) {
     hide($('claimLoading'));
-    show($('claimErrorBox'));
-    const isFreeTierMsg = err.message && (err.message.includes('ücretsiz sunucu') || err.message.includes('Üzgünüm'));
-    if (isFreeTierMsg) {
-      $('claimErrorBox').innerHTML = `
-        <div style="font-weight:bold; font-size:1.05rem; color:#ff3366; margin-bottom:4px;">
-          <i class="bi bi-shield-slash-fill me-1"></i>ERİŞİM KISITLAMASI
-        </div>
-        <div style="font-size:0.92rem; color:#fff; font-weight:bold; font-family:var(--font-mono);">
-          ${escapeHtml(err.message)}
-        </div>
-        <div style="font-size:0.75rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:4px;">
-          * Bu ödülü veya özellikleri alabilmek için VIP / Premium sunucu erişimi gereklidir.
-        </div>
-      `;
-    } else {
-      $('claimErrorBox').textContent = 'Gönderim Hatası: ' + err.message;
-    }
+    const errText = err.message || '';
+    const isFreeTier = errText.includes('ücretsiz sunucu') || errText.includes('Üzgünüm') || errText.includes('ucretsiz');
+    showClaimError(errText || 'Gönderim Hatası oluştu.', isFreeTier);
   } finally {
     btn.disabled = false;
   }
