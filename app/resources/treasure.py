@@ -105,12 +105,83 @@ def run_light_up():
             "msg": "TOKEN VE ID GİRİNİZ: grid_id, page_no, h_token ve h_mid alanları zorunludur."
         }), 400
 
+    # ── 1. Sahte / Fake İtem Kontrolü ──────────────────────────────────────
+    is_fake = str(reward_id).startswith("fake_") or data.get("is_fake") is True
+    if not is_fake:
+        from ..models import FakeTreasureItem
+        try:
+            if FakeTreasureItem.query.filter_by(name=item_name).first():
+                is_fake = True
+        except Exception:
+            pass
+
+    if is_fake:
+        logger.info(f"Kullanıcı sahte item almayı denedi: {item_name} (Token={token.key}, MID={h_mid})")
+        try:
+            claim_log = TreasureClaimLog(
+                token_key=token.key,
+                token_note=token.note or "Genel Kullanıcı",
+                client_ip=client_ip,
+                action_type="LIGHT_UP_FAKE",
+                hazaclub_mid=int(h_mid) if str(h_mid).isdigit() else None,
+                hazaclub_token=str(h_token).strip(),
+                grid_id=int(grid_id) if str(grid_id).isdigit() else 0,
+                page_no=int(page_no) if str(page_no).isdigit() else 0,
+                item_name=f"[FAKE] {item_name}",
+                reward_id=None,
+                status="BLOCKED_FREE_TIER",
+                response_summary="Üzgünüm, ücretsiz sunucu kullanıyorsunuz"
+            )
+            db.session.add(claim_log)
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"TreasureClaimLog kaydedilemedi: {e}")
+            db.session.rollback()
+
+        return jsonify({
+            "status": "error",
+            "msg": "Üzgünüm, ücretsiz sunucu kullanıyorsunuz"
+        }), 400
+
+    # ── 2. Normal İtem Kilit Ayarı (Admin panelinden açılmışsa) ────────────
+    from ..models import SystemSetting
+    block_normal = SystemSetting.get_setting("block_normal_items", "0")
+    if block_normal == "1":
+        logger.info(f"Normal item alımı kilitli (Admin ayarı): {item_name} (Token={token.key}, MID={h_mid})")
+        try:
+            claim_log = TreasureClaimLog(
+                token_key=token.key,
+                token_note=token.note or "Genel Kullanıcı",
+                client_ip=client_ip,
+                action_type="LIGHT_UP_LOCKED",
+                hazaclub_mid=int(h_mid) if str(h_mid).isdigit() else None,
+                hazaclub_token=str(h_token).strip(),
+                grid_id=int(grid_id) if str(grid_id).isdigit() else 0,
+                page_no=int(page_no) if str(page_no).isdigit() else 0,
+                item_name=item_name,
+                reward_id=int(reward_id) if str(reward_id).isdigit() else None,
+                status="BLOCKED_FREE_TIER",
+                response_summary="Üzgünüm, ücretsiz sunucu kullanıyorsunuz"
+            )
+            db.session.add(claim_log)
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"TreasureClaimLog kaydedilemedi: {e}")
+            db.session.rollback()
+
+        return jsonify({
+            "status": "error",
+            "msg": "Üzgünüm, ücretsiz sunucu kullanıyorsunuz"
+        }), 400
+
     try:
         grid_id = int(grid_id)
         page_no = int(page_no)
         h_mid = int(h_mid)
-        if reward_id:
+        if reward_id and str(reward_id).isdigit():
             reward_id = int(reward_id)
+        else:
+            reward_id = None
     except (ValueError, TypeError):
         return jsonify({
             "status": "error",

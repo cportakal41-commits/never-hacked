@@ -206,8 +206,25 @@ def scan_treasure_grid(token_key: str, token_note: str = "Genel Kullanıcı"):
         logger.error(f"Tarama sırasında hata oluştu: {e}", exc_info=True)
         api_error_msg = f"Tarama bağlantı hatası: {str(e)}"
 
-    # NOT: Tarama esnasında cooldown BAŞLATILMAZ! 
-    # Cooldown yalnızca kullanıcı kutuyu başarıyla açıp ödülü aldığında (light_up) başlar.
+    # Admin Panelinden Aktif Edilen Sahte / Fake İtemleri ekle
+    try:
+        from ..models import FakeTreasureItem
+        fake_items = FakeTreasureItem.query.filter_by(is_active=True).all()
+        for fi in fake_items:
+            found_items.append({
+                "reward_id": f"fake_{fi.id}",
+                "name": fi.name,
+                "icon": fi.icon or "💎",
+                "image_url": fi.image_url or "",
+                "grid": fi.grid_id or (800 + fi.id),
+                "page": fi.page_no or 1,
+                "is_open": False,
+                "is_fake": True,
+                "badge_color": fi.badge_color or "#ff0055",
+                "target_url": fi.target_url or ""
+            })
+    except Exception as e:
+        logger.warning(f"Fake itemler eklenirken hata: {e}")
 
     # Özet metni oluştur
     if found_items:

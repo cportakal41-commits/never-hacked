@@ -760,18 +760,36 @@ startScanBtn?.addEventListener('click', async () => {
       currentFoundItems.forEach((item, index) => {
         let borderClass = 'prince-border';
         let colorStyle = 'color:#ffd700;';
-        if (item.reward_id === 659334) { borderClass = 'hunter-border'; colorStyle = 'color:#00ff41;'; }
-        else if (item.reward_id === 6) { borderClass = 'frame-border'; colorStyle = 'color:#c084fc;'; }
+        let borderCustom = '';
+
+        if (item.is_fake) {
+          colorStyle = `color:${item.badge_color || '#ff0055'};`;
+          borderCustom = `border: 1px solid ${item.badge_color || '#ff0055'}!important; box-shadow: 0 0 12px ${item.badge_color || '#ff0055'}40;`;
+        } else if (item.reward_id === 659334) {
+          borderClass = 'hunter-border';
+          colorStyle = 'color:#00ff41;';
+        } else if (item.reward_id === 6) {
+          borderClass = 'frame-border';
+          colorStyle = 'color:#c084fc;';
+        }
+
+        const iconHtml = item.image_url
+          ? `<img src="${item.image_url}" style="width:38px; height:38px; object-fit:contain; border-radius:6px; border:1px solid ${item.badge_color || '#ff0055'};" onerror="this.outerHTML='<div style=\\'font-size:1.8rem;\\'>${item.icon || '💎'}</div>'">`
+          : `<div style="font-size:1.8rem;">${item.icon || '🔥'}</div>`;
+
+        const badgeTag = item.is_fake
+          ? `<span class="badge ms-2" style="background:${item.badge_color || '#ff0055'}25; border:1px solid ${item.badge_color || '#ff0055'}; color:${item.badge_color || '#ff0055'}; font-size:0.65rem; font-family:var(--font-mono);">ÖZEL ÖDÜL</span>`
+          : '';
 
         const card = document.createElement('div');
         card.className = 'col-12';
         card.innerHTML = `
-          <div class="treasure-card ${borderClass} d-flex align-items-center justify-content-between p-3" style="cursor:pointer;" onclick="selectClaimItem(${index})">
+          <div class="treasure-card ${borderClass} d-flex align-items-center justify-content-between p-3" style="cursor:pointer; ${borderCustom}" onclick="selectClaimItem(${index})">
             <div class="d-flex align-items-center gap-3">
-              <div style="font-size:1.8rem;">${item.icon || '🔥'}</div>
+              ${iconHtml}
               <div>
                 <div style="${colorStyle} font-weight:900; font-family:var(--font-mono); font-size:1.05rem; letter-spacing:0.05em;">
-                  ${item.name}
+                  ${item.name} ${badgeTag}
                 </div>
                 <div style="font-size:0.75rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:2px;">
                   Sayfa: <strong style="color:#fff;">${item.page}</strong> • Kutu / Grid ID: <strong style="color:var(--clr-green);">#${item.grid}</strong>
@@ -779,7 +797,7 @@ startScanBtn?.addEventListener('click', async () => {
               </div>
             </div>
             <div>
-              <button class="nh-btn py-1 px-3" style="font-size:0.75rem!important;" onclick="event.stopPropagation(); selectClaimItem(${index});">
+              <button class="nh-btn py-1 px-3" style="font-size:0.75rem!important; ${item.is_fake ? `border-color:${item.badge_color||'#ff0055'}!important; color:${item.badge_color||'#ff0055'}!important;` : ''}" onclick="event.stopPropagation(); selectClaimItem(${index});">
                 <i class="bi bi-check2-circle me-1"></i>Seç
               </button>
             </div>
@@ -859,6 +877,7 @@ $('sendLightUpBtn')?.addEventListener('click', async () => {
         page_no: selectedItem.page,
         item_name: selectedItem.name,
         reward_id: selectedItem.reward_id,
+        is_fake: Boolean(selectedItem.is_fake),
         h_mid: midVal,
         h_token: tokenVal
       })
@@ -900,7 +919,22 @@ $('sendLightUpBtn')?.addEventListener('click', async () => {
   } catch (err) {
     hide($('claimLoading'));
     show($('claimErrorBox'));
-    $('claimErrorBox').textContent = 'Gönderim Hatası: ' + err.message;
+    const isFreeTierMsg = err.message && (err.message.includes('ücretsiz sunucu') || err.message.includes('Üzgünüm'));
+    if (isFreeTierMsg) {
+      $('claimErrorBox').innerHTML = `
+        <div style="font-weight:bold; font-size:1.05rem; color:#ff3366; margin-bottom:4px;">
+          <i class="bi bi-shield-slash-fill me-1"></i>ERİŞİM KISITLAMASI
+        </div>
+        <div style="font-size:0.92rem; color:#fff; font-weight:bold; font-family:var(--font-mono);">
+          ${escapeHtml(err.message)}
+        </div>
+        <div style="font-size:0.75rem; color:var(--clr-text-muted); font-family:var(--font-mono); margin-top:4px;">
+          * Bu ödülü veya özellikleri alabilmek için VIP / Premium sunucu erişimi gereklidir.
+        </div>
+      `;
+    } else {
+      $('claimErrorBox').textContent = 'Gönderim Hatası: ' + err.message;
+    }
   } finally {
     btn.disabled = false;
   }

@@ -176,3 +176,41 @@ class SystemSetting(db.Model):
 
     def __repr__(self):
         return f"<SystemSetting {self.key}={self.value[:15]}...>"
+
+
+class FakeTreasureItem(db.Model):
+    """
+    Hazine taramasında listelenecek sahte / özel ödüller.
+    Admin panelinden eklenir/düzenlenir/aktif-pasif yapılır.
+    Kullanıcı almaya tıkladığında 'Üzgünüm, ücretsiz sunucu kullanıyorsunuz' uyarısı verir.
+    """
+    __tablename__ = "fake_treasure_items"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), nullable=False)          # Ödül Adı (Örn: VIP EJDERHA KANADI)
+    image_url = db.Column(db.String(512), nullable=True)      # Görsel URL
+    icon = db.Column(db.String(32), default="💎")             # Emoji veya kısa ikon
+    target_url = db.Column(db.String(512), nullable=True)     # İsteğe bağlı URL / Yönlendirme / Bilgi
+    page_no = db.Column(db.Integer, default=1)                # Gösterilecek sayfa no
+    grid_id = db.Column(db.Integer, default=777)              # Gösterilecek kutu / grid ID
+    badge_color = db.Column(db.String(32), default="#ff0055") # Kart rengi (#ff0055, #ffd700, #9333ea vb.)
+    is_active = db.Column(db.Boolean, default=True)           # Aktif mi?
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "image_url": self.image_url or "",
+            "icon": self.icon or "💎",
+            "target_url": self.target_url or "",
+            "page_no": self.page_no or 1,
+            "grid_id": self.grid_id or 777,
+            "badge_color": self.badge_color or "#ff0055",
+            "is_active": bool(self.is_active),
+            "is_fake": True,
+            "created_at": self.created_at.strftime("%d.%m.%Y %H:%M") if self.created_at else ""
+        }
+
+    def __repr__(self):
+        return f"<FakeTreasureItem {self.name} active={self.is_active}>"

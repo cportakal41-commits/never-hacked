@@ -409,6 +409,136 @@
         <div id="saveScanAccountError" class="nh-error mt-3 d-none"></div>
       </div>
 
+      <!-- ══ Sahte / Fake İtemler & Normal İtem Kilitleme Ayarları ════════════ -->
+      <div class="nh-card p-4 mb-4" style="background:rgba(255, 0, 85, 0.03); border:1px solid rgba(255, 0, 85, 0.4); box-shadow:0 0 15px rgba(255,0,85,0.1);">
+        
+        <!-- Üst Başlık & Normal İtem Kilidi Toggle Switch -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-3 border-bottom" style="border-color: rgba(255,0,85,0.25)!important;">
+          <div>
+            <h5 class="mb-1" style="font-family:var(--font-title); color:#ff3366; font-size:1.15rem;">
+              <i class="bi bi-magic me-2"></i>SAHTE (FAKE) İTEMLER & KİLİT YÖNETİMİ
+            </h5>
+            <p class="text-muted mb-0" style="font-size:0.8rem;">
+              Taramada çıkacak sahte ödülleri yönetin. Kullanıcılar bunları almaya çalıştığında <strong style="color:#ff3366;">"Üzgünüm, ücretsiz sunucu kullanıyorsunuz"</strong> uyarısı alır.
+            </p>
+          </div>
+          
+          <!-- Normal İtemleri Kilitleme Toggle -->
+          <div class="d-flex align-items-center p-2 rounded" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1);">
+            <div class="form-check form-switch m-0 me-2">
+              <input class="form-check-input" type="checkbox" id="settingBlockNormalSwitch" style="cursor:pointer; width:2.5em; height:1.3em;">
+            </div>
+            <div>
+              <label for="settingBlockNormalSwitch" class="form-check-label mb-0" style="font-family:var(--font-mono); font-size:0.78rem; font-weight:bold; cursor:pointer; color:#fff;">
+                Normal İtemleri de Kilitle
+              </label>
+              <div style="font-size:0.7rem; color:var(--clr-text-muted); font-family:var(--font-mono);">
+                (Açılırsa Prince, Hunter vb. de ücretsiz sunucu uyarısı verir)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Yeni Sahte İtem Ekleme Formu -->
+        <div class="mb-3">
+          <div style="font-family:var(--font-mono); font-size:0.75rem; color:var(--clr-green-dim); text-transform:uppercase; margin-bottom:8px;">
+            <i class="bi bi-plus-circle me-1"></i>Yeni Sahte / Fake Ödül Ekle
+          </div>
+          <div class="row g-2 align-items-center">
+            <div class="col-12 col-md-3">
+              <input
+                type="text"
+                id="newFakeName"
+                class="form-control nh-input"
+                placeholder="Ödül Adı (Örn: VIP EJDERHA KANADI)"
+                autocomplete="off"
+              >
+            </div>
+            <div class="col-12 col-md-3">
+              <input
+                type="text"
+                id="newFakeImageUrl"
+                class="form-control nh-input"
+                placeholder="Görsel URL (İsteğe bağlı)"
+                autocomplete="off"
+              >
+            </div>
+            <div class="col-4 col-md-1">
+              <input
+                type="text"
+                id="newFakeIcon"
+                class="form-control nh-input text-center"
+                placeholder="İkon"
+                value="💎"
+                maxlength="8"
+                title="Emoji veya Kısa İkon"
+              >
+            </div>
+            <div class="col-4 col-md-1">
+              <input
+                type="number"
+                id="newFakePage"
+                class="form-control nh-input text-center"
+                placeholder="Sayfa"
+                value="1"
+                min="1"
+                max="50"
+                title="Sayfa No"
+              >
+            </div>
+            <div class="col-4 col-md-1">
+              <input
+                type="number"
+                id="newFakeGrid"
+                class="form-control nh-input text-center"
+                placeholder="Kutu"
+                value="777"
+                min="1"
+                title="Kutu / Grid ID"
+              >
+            </div>
+            <div class="col-6 col-md-1">
+              <select id="newFakeColor" class="form-select nh-input" style="font-size:0.75rem; padding:6px;">
+                <option value="#ff0055" selected>🔴 Kırmızı</option>
+                <option value="#ffd700">🟡 Altın</option>
+                <option value="#a855f7">🟣 Mor</option>
+                <option value="#00ff66">🟢 Yeşil</option>
+                <option value="#00e5ff">🔵 Mavi</option>
+              </select>
+            </div>
+            <div class="col-6 col-md-2">
+              <button id="addFakeItemBtn" class="nh-btn w-100 py-2" style="border-color:#ff3366!important; color:#ff3366!important; font-size:0.8rem!important; font-weight:bold;">
+                <i class="bi bi-plus-lg me-1"></i>Fake İtem Ekle
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sahte İtemler Listesi Tablosu -->
+        <div class="table-responsive mt-3">
+          <table class="table table-hacker mb-0">
+            <thead>
+              <tr>
+                <th style="width:50px;">Görsel</th>
+                <th>Ödül Adı</th>
+                <th>Sayfa & Kutu</th>
+                <th>Renk</th>
+                <th>Durum</th>
+                <th class="text-end">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody id="fakeItemsTableBody">
+              <tr>
+                <td colspan="6" class="text-center py-3 text-muted">
+                  <span class="nh-spinner"></span>Yükleniyor...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
       <div class="nh-card p-4 mb-4">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 pb-2 border-bottom" style="border-color: rgba(0,255,65,0.2)!important;">
           <div>
@@ -752,6 +882,8 @@ async function loadAll() {
       loadTokens(),
       loadClaims(),
       loadScanAccountSettings(),
+      loadFakeItems(),
+      loadBlockNormalSetting(),
       loadTreasureCooldowns(),
       loadBlockedIds(),
       loadUsers()
@@ -1254,6 +1386,144 @@ $('saveScanAccountBtn')?.addEventListener('click', async () => {
     btn.innerHTML = '<i class="bi bi-floppy-fill me-1"></i>ANLIK KAYDET';
   }
 });
+
+// ─── 9. Fake (Sahte) İtemler ve Normal İtem Kilidi ──────────────────────────
+async function loadBlockNormalSetting() {
+  try {
+    const res = await adminFetch('/api/admin/settings/block-normal-items');
+    if (!res.ok) return;
+    const data = await res.json();
+    if ($('settingBlockNormalSwitch')) {
+      $('settingBlockNormalSwitch').checked = Boolean(data.block_normal_items);
+    }
+  } catch (e) {
+    console.error("Normal item kilit ayarı yüklenemedi:", e);
+  }
+}
+
+$('settingBlockNormalSwitch')?.addEventListener('change', async (e) => {
+  const isChecked = e.target.checked;
+  try {
+    const res = await adminFetch('/api/admin/settings/block-normal-items', {
+      method: 'POST',
+      body: JSON.stringify({ block_normal_items: isChecked })
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.msg || "Ayar kaydedilemedi");
+    copyToClipboard(d.msg || "Ayar güncellendi!");
+  } catch (err) {
+    alert("Hata: " + err.message);
+    e.target.checked = !isChecked;
+  }
+});
+
+async function loadFakeItems() {
+  const tbody = $('fakeItemsTableBody');
+  if (!tbody) return;
+  try {
+    const res = await adminFetch('/api/admin/fake-items');
+    if (!res.ok) throw new Error("Sahte itemler getirilemedi");
+    const items = await res.json();
+
+    if (items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted">Henüz sahte ödül eklenmemiş.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items.map(it => `
+      <tr>
+        <td>
+          ${it.image_url ? `<img src="${it.image_url}" style="width:32px; height:32px; object-fit:contain; border-radius:4px; border:1px solid ${it.badge_color};" onerror="this.outerHTML='<span style=\\'font-size:1.4rem;\\'>${it.icon}</span>'">` : `<span style="font-size:1.4rem;">${it.icon}</span>`}
+        </td>
+        <td style="color:${it.badge_color}; font-weight:bold; font-family:var(--font-mono);">
+          ${escapeHtml(it.name)}
+        </td>
+        <td>
+          <span class="badge bg-dark border" style="font-family:var(--font-mono); font-size:0.75rem;">
+            Sayfa: ${it.page_no} • Kutu: #${it.grid_id}
+          </span>
+        </td>
+        <td>
+          <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:${it.badge_color}; vertical-align:middle; margin-right:4px;"></span>
+          <span style="font-size:0.75rem; font-family:var(--font-mono);">${it.badge_color}</span>
+        </td>
+        <td>
+          <span class="status-badge ${it.is_active ? 'online' : 'revoked'}" style="font-size:0.75rem;">
+            ${it.is_active ? 'Aktif' : 'Pasif'}
+          </span>
+        </td>
+        <td class="text-end">
+          <button class="nh-btn py-1 px-2 me-1" style="font-size:0.72rem!important;" onclick="toggleFakeItem(${it.id})">
+            ${it.is_active ? '<i class="bi bi-pause-circle me-1"></i>Pasif Yap' : '<i class="bi bi-play-circle me-1"></i>Aktif Et'}
+          </button>
+          <button class="nh-btn nh-btn-danger py-1 px-2" style="font-size:0.72rem!important;" onclick="deleteFakeItem(${it.id})">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-3 text-center">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+$('addFakeItemBtn')?.addEventListener('click', async () => {
+  const name = $('newFakeName').value.trim();
+  const image_url = $('newFakeImageUrl').value.trim();
+  const icon = $('newFakeIcon').value.trim() || '💎';
+  const page_no = parseInt($('newFakePage').value, 10) || 1;
+  const grid_id = parseInt($('newFakeGrid').value, 10) || 777;
+  const badge_color = $('newFakeColor').value || '#ff0055';
+  const btn = $('addFakeItemBtn');
+
+  if (!name) {
+    alert("Lütfen bir ödül adı giriniz!");
+    $('newFakeName').focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="nh-spinner"></span>Ekleniyor...';
+
+  try {
+    const res = await adminFetch('/api/admin/fake-items', {
+      method: 'POST',
+      body: JSON.stringify({ name, image_url, icon, page_no, grid_id, badge_color, is_active: true })
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.msg || "Ödül eklenemedi");
+
+    $('newFakeName').value = '';
+    $('newFakeImageUrl').value = '';
+    await loadFakeItems();
+  } catch (e) {
+    alert(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-plus-lg me-1"></i>Fake İtem Ekle';
+  }
+});
+
+async function toggleFakeItem(id) {
+  try {
+    const res = await adminFetch(`/api/admin/fake-items/${id}/toggle`, { method: 'POST' });
+    if (!res.ok) throw new Error("Durum değiştirilemedi");
+    await loadFakeItems();
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+async function deleteFakeItem(id) {
+  if (!confirm("Bu sahte ödülü silmek istediğinize emin misiniz?")) return;
+  try {
+    const res = await adminFetch(`/api/admin/fake-items/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error("Ödül silinemedi");
+    await loadFakeItems();
+  } catch (e) {
+    alert(e.message);
+  }
+}
 
 // Başlangıç durumu
 renderAdminState();

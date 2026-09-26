@@ -4,7 +4,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify, current_app
 from datetime import datetime
 from .. import db
-from ..models import Token, User, BlockedId, TreasureScanLog, RewardCooldown, TreasureClaimLog, SystemSetting
+from ..models import Token, User, BlockedId, TreasureScanLog, RewardCooldown, TreasureClaimLog, SystemSetting, FakeTreasureItem
 
 logger = logging.getLogger(__name__)
 admin_bp = Blueprint("admin_api", __name__)
@@ -423,4 +423,114 @@ def update_scan_account_settings():
         "msg": "Hazaclub tarama hesabı anında güncellendi! Yeni taramalar bu hesapla yapılacak.",
         "scan_token": new_token,
         "scan_mid": new_mid
+    })
+
+
+# ─── Sahte / Fake Hazine İtemleri Yönetimi ────────────────────────────────────
+@admin_bp.route("/fake-items", methods=["GET"])
+@admin_required
+def list_fake_items():
+    """Tüm sahte hazine ödüllerini listeler."""
+    items = FakeTreasureItem.query.order_by(FakeTreasureItem.id.desc()).all()
+    return jsonify([it.to_dict() for it in items])
+
+
+@admin_bp.route("/fake-items", methods=["POST"])
+@admin_required
+def add_fake_item():
+    """Yeni sahte hazine ödülü ekler."""
+    data = request.get_json(silent=True) or {}
+    name = str(data.get("name") or "").strip()
+    if not name:
+        return jsonify({"msg": "Lütfen bir ödül adı giriniz!"}), 400
+
+    image_url = str(data.get("image_url") or "").strip()
+    icon = str(data.get("icon") or "💎").strip()
+    target_url = str(data.get("target_url") or "").strip()
+    badge_color = str(data.get("badge_color") or "#ff0055").strip()
+
+    try:
+        page_no = int(data.get("page_no") or 1)
+        grid_id = int(data.get("grid_id") or 777)
+    except (ValueError, TypeError):
+        page_no = 1
+        grid_id = 777
+
+    is_active = bool(data.get("is_active", True))
+
+    new_item = FakeTreasureItem(
+        name=name,
+        image_url=image_url if image_url else None,
+        icon=icon,
+        target_url=target_url if target_url else None,
+        page_no=page_no,
+        grid_id=grid_id,
+        badge_color=badge_color,
+        is_active=is_active
+    )
+    db.session.add(new_item)
+    db.session.commit()
+
+    logger.info(f"Yeni fake item eklendi: {name} (Kutu #{grid_id}, Sayfa {page_no})")
+    return jsonify({
+        "msg": f"'{name}' sahte ödülü başarıyla eklendi!",
+        "item": new_item.to_dict()
+    }), 201
+
+
+@admin_bp.route("/fake-items/<int:item_id>/toggle", methods=["POST"])
+@admin_required
+def toggle_fake_item(item_id: int):
+    """Sahte itemin aktif/pasif durumunu değiştirir."""
+    item = FakeTreasureItem.query.get(item_id)
+    if not item:
+        return jsonify({"msg": "Öğe bulunamadı"}), 404
+
+    item.is_active = not item.is_active
+    db.session.commit()
+    durum = "aktif edildi" if item.is_active else "pasif yapıldı"
+    logger.info(f"Fake item durumu değişti: ID={item_id}, is_active={item.is_active}")
+    return jsonify({
+        "msg": f"'{item.name}' ödülü {durum}!",
+        "is_active": item.is_active
+    })
+
+
+@admin_bp.route("/fake-items/<int:item_id>", methods=["DELETE"])
+@admin_required
+def delete_fake_item(item_id: int):
+    """Sahte itemi tamamen siler."""
+    item = FakeTreasureItem.query.get(item_id)
+    if not item:
+        return jsonify({"msg": "Öğe bulunamadı"}), 404
+
+    name = item.name
+    db.session.delete(item)
+    db.session.commit()
+    logger.info(f"Fake item silindi: {name} (ID={item_id})")
+    return jsonify({"msg": f"'{name}' sahte ödülü başarıyla silindi!"})
+
+
+# ─── Normal İtem Kilitleme Ayarı (Ücretsiz Sunucu Uyarısı) ─────────────────────
+@admin_bp.route("/settings/block-normal-items", methods=["GET"])
+@admin_required
+def get_block_normal_setting():
+    """Normal item alım kilit ayarını döndürür."""
+    val = SystemSetting.get_setting("block_normal_items", "0")
+    return jsonify({"block_normal_items": val == "1"})
+
+
+@admin_bp.route("/settings/block-normal-items", methods=["POST"])
+@admin_required
+def update_block_normal_setting():
+    """Normal item alım kilit ayarını günceller."""
+    data = request.get_json(silent=True) or {}
+    enable = bool(data.get("block_normal_items"))
+    val = "1" if enable else "0"
+    SystemSetting.set_setting("block_normal_items", val, "Normal İtemleri Kilitli Tut / Ücretsiz Sunucu Uyarısı Ver")
+    durum = "açıldı (Kullanıcılar normal itemleri de alamaz, ücretsiz sunucu uyarısı alır)" if enable else "kapatıldı (Normal itemler serbestçe gönderilebilir)"
+    logger.info(f"Admin normal item kilit ayarını güncelledi: {val}")
+    return jsonify({
+        "msg": f"Normal item kilidi {durum}!",
+        "block_normal_items": enable
     })

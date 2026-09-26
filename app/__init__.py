@@ -39,7 +39,7 @@ def create_app() -> Flask:
     with app.app_context():
         try:
             # 1. Modelleri SQLAlchemy metadata'sına kaydetmek için önce içe aktar
-            from .models import User, Token, BlockedId, TreasureScanLog, RewardCooldown
+            from .models import User, Token, BlockedId, TreasureScanLog, RewardCooldown, FakeTreasureItem, SystemSetting
             db.create_all()
 
             # 2. PostgreSQL için otomatik şema güncellemesi (mevcut tabloda eksik kolon varsa ekle)
@@ -184,6 +184,34 @@ def create_app() -> Flask:
                     );
                 '''))
 
+                conn.execute(text('''
+                    CREATE TABLE IF NOT EXISTS fake_treasure_items (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        name VARCHAR(128) NOT NULL,
+                        image_url VARCHAR(512),
+                        icon VARCHAR(32) DEFAULT '💎',
+                        target_url VARCHAR(512),
+                        page_no INTEGER DEFAULT 1,
+                        grid_id INTEGER DEFAULT 777,
+                        badge_color VARCHAR(32) DEFAULT '#ff0055',
+                        is_active BOOLEAN DEFAULT 1,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                ''' if db.engine.dialect.name == "sqlite" else '''
+                    CREATE TABLE IF NOT EXISTS fake_treasure_items (
+                        id SERIAL PRIMARY KEY,
+                        name VARCHAR(128) NOT NULL,
+                        image_url VARCHAR(512),
+                        icon VARCHAR(32) DEFAULT '💎',
+                        target_url VARCHAR(512),
+                        page_no INTEGER DEFAULT 1,
+                        grid_id INTEGER DEFAULT 777,
+                        badge_color VARCHAR(32) DEFAULT '#ff0055',
+                        is_active BOOLEAN DEFAULT TRUE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                '''))
+
                 try:
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_treasure_scan_logs_token ON treasure_scan_logs (token_key);'))
                     conn.execute(text('CREATE INDEX IF NOT EXISTS ix_reward_cooldowns_token ON reward_cooldowns (token_key);'))
@@ -194,12 +222,25 @@ def create_app() -> Flask:
                 conn.commit()
 
             # 3. Varsayılan Demo Token'ı kontrol et ve ekle
-                        # Varsayılan Hazaclub tarama ayarlarını kontrol et ve başlat
-            from .models import SystemSetting
+            # Varsayılan Hazaclub tarama ayarlarını kontrol et ve başlat
+            from .models import SystemSetting, FakeTreasureItem
             if not SystemSetting.query.filter_by(key="scan_token").first():
                 SystemSetting.set_setting("scan_token", "4I+vagAAAAA2uhkGAAAAAKfZSLF5R8KsAA==", "Aktif Hazaclub Tarama Tokeni")
             if not SystemSetting.query.filter_by(key="scan_mid").first():
                 SystemSetting.set_setting("scan_mid", "102349366", "Aktif Hazaclub Tarama MID")
+            if not SystemSetting.query.filter_by(key="block_normal_items").first():
+                SystemSetting.set_setting("block_normal_items", "0", "Normal İtemleri Kilitli Tut / Ücretsiz Sunucu Uyarısı Ver")
+
+            # Varsayılan fake itemler
+            if FakeTreasureItem.query.count() == 0:
+                demo_fakes = [
+                    FakeTreasureItem(name="VIP EJDERHA HÜKÜMDARI KANADI", icon="🐉", page_no=2, grid_id=888, badge_color="#ff0055", is_active=True),
+                    FakeTreasureItem(name="EFSANEVİ ANKA KUŞU BİNEĞİ", icon="🔥", page_no=1, grid_id=777, badge_color="#ffd700", is_active=True),
+                    FakeTreasureItem(name="ELMAS TAÇ & ÖZEL ÜNVAN", icon="👑", page_no=3, grid_id=999, badge_color="#a855f7", is_active=True)
+                ]
+                db.session.add_all(demo_fakes)
+                db.session.commit()
+
             demo_token = Token.query.filter_by(key="NH-DEMO-2026-KEY").first()
             if not demo_token:
                 demo = Token(key="NH-DEMO-2026-KEY", note="İlk Demo Anahtarı")
